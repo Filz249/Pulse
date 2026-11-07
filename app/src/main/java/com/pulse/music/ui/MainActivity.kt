@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     currentEntry?.destination?.route == Screen.Home.route
 
                 Scaffold(
-                    contentWindowInsets = WindowInsets.safeDrawing,
+                    contentWindowInsets = WindowInsets.systemBars,
                     bottomBar = {
                         if (showMiniPlayer) {
                             MiniPlayer(
