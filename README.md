@@ -12,7 +12,6 @@
     <img src="https://img.shields.io/github/v/release/Filz249/Pulse?label=Latest%20Release&color=1DB954" alt="Latest Release" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Android-green.svg" alt="Platform" />
-  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
 <p align="center">
