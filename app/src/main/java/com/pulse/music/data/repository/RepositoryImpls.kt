@@ -58,7 +58,10 @@ class SongRepositoryImpl @Inject constructor(
     override fun getArtists(): Flow<List<Artist>> {
         return getSongs().map { songs ->
             songs.groupBy { it.artist }
-                .mapIndexed { index, (artistName, artistSongs) ->
+                .entries
+                .mapIndexed { index, entry ->
+                    val artistName = entry.key
+                    val artistSongs = entry.value
                     Artist(
                         id = index.toLong(),
                         name = artistName,
