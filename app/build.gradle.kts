@@ -49,7 +49,17 @@ android {
     }
 }
 
+// Strictly enforce Kotlin 2.0.21 stdlib so KSP compiler is not broken by transitive Kotlin 2.2+ dependencies
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion("2.0.21")
+        }
+    }
+}
+
 dependencies {
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.0.21"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
