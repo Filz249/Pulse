@@ -6,15 +6,21 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +36,12 @@ fun TagEditorScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         viewModel.onWritePermissionResult(result.resultCode == Activity.RESULT_OK)
+    }
+
+    val artworkPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let(viewModel::onAlbumArtworkSelected)
     }
 
     val saveTags: () -> Unit = {
@@ -50,10 +62,7 @@ fun TagEditorScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = saveTags,
-                        enabled = !state.isSaving
-                    ) {
+                    IconButton(onClick = saveTags, enabled = !state.isSaving) {
                         Icon(Icons.Default.Save, contentDescription = "Save")
                     }
                 }
@@ -63,9 +72,7 @@ fun TagEditorScreen(
     ) { padding ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -81,7 +88,7 @@ fun TagEditorScreen(
             ) {
                 if (state.saveSuccess == true) {
                     Text(
-                        "Tags successfully updated!",
+                        "Changes successfully saved!",
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -93,6 +100,56 @@ fun TagEditorScreen(
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+
+                Text("Album artwork", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (state.metadata.albumArt != null) {
+                        AsyncImage(
+                            model = state.metadata.albumArt,
+                            contentDescription = "Current album artwork",
+                            modifier = Modifier.size(112.dp).clip(RoundedCornerShape(14.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Surface(
+                            modifier = Modifier.size(112.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(42.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "The selected cover is applied to all ${state.albumTrackCount} track(s) in this album.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = { artworkPicker.launch("image/*") },
+                            enabled = !state.isSaving
+                        ) {
+                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+                            Spacer(Modifier.width(7.dp))
+                            Text(if (state.metadata.albumArt == null) "Choose cover" else "Change cover")
+                        }
+                    }
                 }
 
                 OutlinedTextField(
@@ -146,13 +203,9 @@ fun TagEditorScreen(
                     value = state.metadata.lyrics ?: "",
                     onValueChange = { viewModel.onMetadataChange(state.metadata.copy(lyrics = it)) },
                     label = { Text("Lyrics") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp),
+                    modifier = Modifier.fillMaxWidth().height(160.dp),
                     maxLines = 8
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = saveTags,

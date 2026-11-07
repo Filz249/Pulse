@@ -51,13 +51,16 @@ class TagLibDataSource @Inject constructor() {
                 tags["LYRICS"] = it
             }
 
-            val success = TagLib.setMetadata(filePath, tags)
+            TagLib.setMetadata(filePath, tags)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 
-            if (success && metadata.albumArt != null) {
-                TagLib.setArtwork(filePath, metadata.albumArt, "image/jpeg", "Cover")
-            }
-
-            success
+    suspend fun writeArtwork(filePath: String, artwork: ByteArray): Boolean = withContext(Dispatchers.IO) {
+        try {
+            TagLib.setArtwork(filePath, artwork, "image/jpeg", "Cover")
         } catch (e: Exception) {
             e.printStackTrace()
             false

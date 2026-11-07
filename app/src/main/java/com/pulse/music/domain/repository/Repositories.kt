@@ -18,6 +18,7 @@ interface SongRepository {
 interface TagEditorRepository {
     suspend fun readMetadata(filePath: String): SongMetadata
     suspend fun updateMetadata(filePath: String, metadata: SongMetadata): Boolean
+    suspend fun updateArtwork(filePaths: List<String>, artwork: ByteArray): List<String>
 }
 
 interface PlaylistRepository {

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.pulse.music.domain.model.Song
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit
 fun PlayerScreen(
     viewModel: PlayerViewModel,
     onBackClick: () -> Unit,
+    onEditSongTags: (Song) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val song by viewModel.currentSong.collectAsState()
@@ -44,6 +46,13 @@ fun PlayerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    song?.let { currentSong ->
+                        IconButton(onClick = { onEditSongTags(currentSong) }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit song information")
+                        }
                     }
                 }
             )

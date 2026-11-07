@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
                                     onEditSongTags = { song ->
                                         navController.navigate(
-                                            Screen.TagEditor.createRoute(song.filePath, song.uri.toString())
+                                            Screen.TagEditor.createRoute(song.filePath, song.uri.toString(), song.albumId)
                                         )
                                     }
                                 )
@@ -98,14 +98,20 @@ class MainActivity : ComponentActivity() {
                                 val playerViewModel: PlayerViewModel = hiltViewModel()
                                 PlayerScreen(
                                     viewModel = playerViewModel,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
+                                    onEditSongTags = { song ->
+                                        navController.navigate(
+                                            Screen.TagEditor.createRoute(song.filePath, song.uri.toString(), song.albumId)
+                                        )
+                                    }
                                 )
                             }
                             composable(
                                 Screen.TagEditor.route,
                                 arguments = listOf(
                                     navArgument("filePath") { type = NavType.StringType },
-                                    navArgument("contentUri") { type = NavType.StringType }
+                                    navArgument("contentUri") { type = NavType.StringType },
+                                    navArgument("albumId") { type = NavType.LongType }
                                 )
                             ) {
                                 val tagEditorViewModel: TagEditorViewModel = hiltViewModel()

@@ -120,6 +120,14 @@ class TagEditorRepositoryImpl @Inject constructor(
     override suspend fun updateMetadata(filePath: String, metadata: SongMetadata): Boolean {
         return tagLibDataSource.writeMetadata(filePath, metadata)
     }
+
+    override suspend fun updateArtwork(filePaths: List<String>, artwork: ByteArray): List<String> {
+        val failedPaths = mutableListOf<String>()
+        filePaths.distinct().forEach { path ->
+            if (!tagLibDataSource.writeArtwork(path, artwork)) failedPaths += path
+        }
+        return failedPaths
+    }
 }
 
 @Singleton

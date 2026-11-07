@@ -26,3 +26,11 @@ class UpdateSongTagsUseCase @Inject constructor(
         return repository.updateMetadata(filePath, metadata)
     }
 }
+
+class UpdateAlbumArtworkUseCase @Inject constructor(
+    private val repository: TagEditorRepository
+) {
+    suspend operator fun invoke(filePaths: List<String>, artwork: ByteArray): List<String> {
+        return repository.updateArtwork(filePaths, artwork)
+    }
+}
