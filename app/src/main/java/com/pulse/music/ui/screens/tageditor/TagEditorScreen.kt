@@ -1,6 +1,9 @@
 package com.pulse.music.ui.screens.tageditor
 
 import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,9 +24,21 @@ fun TagEditorScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    val activity = context as? Activity
     val scrollState = rememberScrollState()
+
+    val writePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        viewModel.onWritePermissionResult(result.resultCode == Activity.RESULT_OK)
+    }
+
+    val saveTags: () -> Unit = {
+        viewModel.saveTags { intentSender ->
+            writePermissionLauncher.launch(
+                IntentSenderRequest.Builder(intentSender).build()
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -37,7 +51,7 @@ fun TagEditorScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = { viewModel.saveTags(activity) },
+                        onClick = saveTags,
                         enabled = !state.isSaving
                     ) {
                         Icon(Icons.Default.Save, contentDescription = "Save")
@@ -141,7 +155,7 @@ fun TagEditorScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { viewModel.saveTags(activity) },
+                    onClick = saveTags,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isSaving
                 ) {
