@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Pulse" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Pulse" parent="android:Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">@color/pulse_background</item>
+        <item name="android:statusBarColor">@color/pulse_background</item>
+        <item name="android:navigationBarColor">@color/pulse_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">@color/pulse_amber</item>
+    </style>
+    <style name="Theme.Pulse.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/pulse_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_pulse_mark</item>
+        <item name="windowSplashScreenAnimationDuration">700</item>
+        <item name="postSplashScreenTheme">@style/Theme.Pulse</item>
+    </style>
 </resources>

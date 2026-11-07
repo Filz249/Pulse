@@ -1,154 +1,142 @@
-# Pulse 🎵
+# Pulse
 
 <p align="center">
-  <strong>A modern, offline, ad-free Android music player and audio tag editor inspired by Spotify.</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml">
-    <img src="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml/badge.svg" alt="Build Status" />
-  </a>
-  <a href="https://github.com/Filz249/Pulse/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Filz249/Pulse?label=Latest%20Release&color=1DB954" alt="Latest Release" />
-  </a>
-  <img src="https://img.shields.io/badge/Platform-Android-green.svg" alt="Platform" />
+  <strong>Your music. Your way.</strong><br>
+  A modern, offline-first music player for your personal collection.
 </p>
 
 <p align="center">
   <a href="https://github.com/Filz249/Pulse/releases/download/latest/Pulse.apk">
-    <img src="https://img.shields.io/badge/⬇️_Download-Pulse.apk-1DB954?style=for-the-badge&logo=android&logoColor=white" height="48" alt="Download Pulse APK" />
+    <img src="https://img.shields.io/badge/DOWNLOAD_PULSE-ANDROID_APK-FFB347?style=for-the-badge&labelColor=171313" alt="Download Pulse for Android">
   </a>
+  &nbsp;
+  <a href="https://github.com/Filz249/Pulse/releases/latest">
+    <img src="https://img.shields.io/badge/VIEW_RELEASES-171313?style=for-the-badge&labelColor=292322" alt="View releases">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml">
+    <img src="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml/badge.svg" alt="Build status">
+  </a>
+  <img src="https://img.shields.io/badge/PLATFORM-ANDROID-FFB347?style=flat-square" alt="Android platform">
+  <img src="https://img.shields.io/badge/PRIVACY-NO_TRACKING-292322?style=flat-square" alt="No tracking">
+  <img src="https://img.shields.io/badge/PLAYBACK-OFFLINE-292322?style=flat-square" alt="Offline playback">
+</p>
+
+<p align="center">
+  <img src="assets/pulse-brand-poster.webp" alt="Pulse brand direction and app concept" width="520">
 </p>
 
 ---
 
-## ⚡ Overview
+## Overview
 
-**Pulse** is built for music lovers who prefer locally stored audio files without streaming subscriptions, intrusive advertisements, or telemetry tracking. It provides a polished Spotify-like experience combined with powerful local ID3 / Vorbis tag editing capabilities.
+Pulse is a local music player for people who want to keep their listening experience personal. Browse the audio already stored on your device, build playlists, play music in the background, and maintain your own metadata without an account or streaming subscription.
 
----
+Pulse is designed around a simple principle: your music library belongs to you.
 
-## ✨ Key Features
+## Features
 
-### 1. 🎧 Audio Player & Media Management
-- **Multi-Format Playback**: Supports **MP3, FLAC, WAV, AAC, M4A, and OGG**.
-- **Full Playback Controls**: Play, Pause, Previous, Next, Interactive Seekbar, Shuffle, and Repeat modes (Off, All, One).
-- **Background Playback**: Powered by Android Jetpack **Media3 (`MediaSessionService`)** and ExoPlayer.
-- **System Integration**: Lock screen playback controls, notification player widget, and Bluetooth / headset media button handling (auto-pause on unplug).
+### Playback
 
-### 2. 🗂️ Music Organization & Sorting
-- Browse your music library by **Songs, Artists, Albums, and Playlists**.
-- Real-time instant search across your entire library.
-- Multi-criteria sorting:
-  - By Title (A-Z)
-  - By Artist
-  - By Date Added
-  - By Duration
+- Local audio playback with background support.
+- System media controls for the lock screen, notifications, headphones, and Bluetooth devices.
+- Play, pause, skip, seek, shuffle, and repeat controls.
+- Album artwork displayed throughout the listening experience.
 
-### 3. 🏷️ Native Audio Metadata / Tag Editor
-- Direct in-file ID3 / Vorbis tag modification powered by native C++ **TagLib** via JNI:
-  - Song Title, Artist, Album, Year, Genre, Track Number
-  - Synchronized and unsynchronized lyrics editor
-  - Embedded Album Art cover extractor and updater
-- **Scoped Storage Friendly**: Fully compliant with Android 11+ (API 30+) user write consent (`MediaStore.createWriteRequest`).
+### Personal library
 
-### 4. 🎨 Modern UX / UI
-- 100% built with **Jetpack Compose** and **Material 3**.
-- Sleek Spotify-inspired Dark Theme.
-- Persistent **Mini Player** on bottom with smooth expansion into a **Full Screen Player**.
-- **Privacy-First**: No ads, no analytics, no network permissions required for core features.
+- Browse a local collection by songs, albums, artists, and playlists.
+- Search across track titles, artists, albums, and genres.
+- Sort by title, artist, recently added, or duration.
+- A recently played section that remembers tracks on the device.
 
----
+### Metadata editor
 
-## 🏗️ Architecture & Tech Stack
+- Edit track title, artist, album, year, genre, and track number.
+- Read and update embedded lyrics.
+- Read and update embedded album artwork.
+- Android media-write approval is requested before changing files when required by the operating system.
 
-| Layer | Technology | Role |
-|---|---|---|
-| **Language** | Kotlin 2.0+ | Coroutines & StateFlow for reactive asynchronous state |
-| **UI Framework** | Jetpack Compose + Material 3 | Modern declarative UI, edge-to-edge support |
-| **Audio Engine** | AndroidX Media3 (ExoPlayer + Session) | Background service, audio focus, notification widget |
-| **Tag Editing** | AndroidTagLib (`io.github.amanrajaryan:TagLib`) | High-performance native C++ TagLib binding |
-| **Local Database** | Room Database (SQLite) | Caching scanned metadata and user playlists |
-| **Dependency Injection** | Hilt (Dagger) | Clean, testable dependency injection |
-| **Image Loading** | Coil (Compose) | Fast album artwork caching and rendering |
-| **Architecture Pattern** | Clean Architecture + MVVM | Strict separation of concerns (Data, Domain, Presentation) |
+### Private by design
 
----
+- No advertising SDKs or analytics in the app.
+- No account required.
+- No streaming service dependency.
+- Your library and recently played history stay on your device.
 
-## 📦 Project Structure
+## Download
 
-```
-pulse/
-├── .github/workflows/
-│   └── build-apk.yml               # Automated GitHub Actions APK build & release
-├── app/
-│   ├── build.gradle.kts            # App dependencies & Android configuration
-│   └── src/main/
-│       ├── AndroidManifest.xml     # Permissions & MediaSessionService declaration
-│       └── java/com/pulse/music/
-│           ├── PulseApplication.kt # @HiltAndroidApp
-│           ├── data/
-│           │   ├── local/
-│           │   │   ├── db/         # Room Database, DAOs & Entities
-│           │   │   ├── mediastore/ # MediaStoreDataSource (Storage scanner)
-│           │   │   └── tageditor/  # TagLibDataSource (ID3 tag reader & writer)
-│           │   └── repository/     # Data repository implementations
-│           ├── domain/
-│           │   ├── model/          # Song, SongMetadata, Album, Artist, Playlist
-│           │   ├── repository/     # Repository interfaces
-│           │   └── usecase/        # Clean business use cases
-│           ├── player/
-│           │   ├── AudioPlayerService.kt # Media3 background service
-│           │   └── PlayerConnection.kt   # UI-to-Service MediaController bridge
-│           ├── di/                 # Hilt dependency injection modules
-│           └── ui/
-│               ├── MainActivity.kt # Navigation host & MiniPlayer container
-│               ├── components/     # MiniPlayer, SongListItem
-│               ├── navigation/     # Screen routes
-│               ├── screens/
-│               │   ├── home/       # Library browsing, sorting & search
-│               │   ├── player/     # Full screen playback view
-│               │   └── tageditor/  # Tag editing screen
-│               └── theme/          # Material 3 colors, typography & theme
-├── gradle/
-│   └── libs.versions.toml          # Gradle version catalog
-└── README.md
-```
+The latest Android APK is published automatically after a successful GitHub Actions build.
 
----
+<p align="center">
+  <a href="https://github.com/Filz249/Pulse/releases/download/latest/Pulse.apk">
+    <img src="https://img.shields.io/badge/DOWNLOAD_PULSE-GET_THE_LATEST_ANDROID_APK-FFB347?style=for-the-badge&labelColor=171313" alt="Download the latest Pulse APK">
+  </a>
+</p>
 
-## 📲 Download & Installation
+### Installation
 
-1. Tap the **[Download Pulse.apk](https://github.com/Filz249/Pulse/releases/download/latest/Pulse.apk)** button above (or check the [Releases](https://github.com/Filz249/Pulse/releases) tab).
-2. Open the downloaded `.apk` file on your Android device.
-3. If prompted, allow your browser or file manager to *Install unknown apps*.
-4. Launch **Pulse**, grant audio storage permissions, and start listening!
+1. Download the APK to your Android device.
+2. Open the downloaded file.
+3. Allow installation from your browser or file manager if Android asks.
+4. Open Pulse and grant access to local audio when prompted.
 
----
+## Build from source
 
-## 🛠️ Building from Source
+### Requirements
 
-### Prerequisites
 - JDK 17
-- Android SDK 35 (Android 15)
-- Android Studio (Ladybug or newer recommended)
+- Android SDK 35
+- Android Studio with Kotlin and Compose support
 
-### Build Commands
+### Build
+
 ```bash
-# Clone the repository
 git clone https://github.com/Filz249/Pulse.git
 cd Pulse
-
-# Build debug APK
 ./gradlew assembleDebug
-
-# The built APK will be located at:
-# app/build/outputs/apk/debug/app-debug.apk
 ```
 
----
+The debug APK is generated at:
 
-## 📄 License & Privacy
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
 
-- **100% Offline & Ad-Free**: Pulse does not contain ads, third-party trackers, or network calls.
-- Distributed under the **MIT License**.
+## Technology
+
+| Area | Implementation |
+| --- | --- |
+| Language | Kotlin |
+| UI | Jetpack Compose and Material 3 |
+| Playback | AndroidX Media3 and ExoPlayer |
+| Background audio | MediaSessionService |
+| Metadata | TagLib through JNI |
+| Local database | Room and SQLite |
+| Dependency injection | Hilt |
+| Image loading | Coil |
+| Architecture | Clean Architecture and MVVM |
+
+## Project structure
+
+```text
+app/
+  src/main/
+    java/com/pulse/music/
+      data/          Local data sources and repositories
+      domain/        Models, repository contracts, and use cases
+      player/        Media3 playback service and controller
+      ui/            Compose screens, components, navigation, and theme
+    res/             App icon, launch screen, and Android resources
+.github/workflows/   Automated Android build and release
+```
+
+## Privacy
+
+Pulse is intended to work with audio stored on the device. It does not need an account or online music service to play your local files. Review the source code and Android permissions in this repository for implementation details.
+
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
