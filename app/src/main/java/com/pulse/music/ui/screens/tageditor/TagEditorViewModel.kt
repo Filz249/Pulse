@@ -129,9 +129,11 @@ class TagEditorViewModel @Inject constructor(
 
     private fun readAndNormalizeArtwork(uri: Uri): ByteArray {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use { stream ->
+        val boundsStream = context.contentResolver.openInputStream(uri)
+            ?: throw IllegalArgumentException("The selected image could not be opened.")
+        boundsStream.use { stream ->
             BitmapFactory.decodeStream(stream, null, bounds)
-        } ?: throw IllegalArgumentException("The selected image could not be opened.")
+        }
 
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
             throw IllegalArgumentException("The selected file is not a supported image.")
