@@ -33,16 +33,17 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --info
+        run: ./gradlew assembleDebug --stacktrace 2>&1 | tee gradle-build.log
 
-      - name: Upload Build Reports on Failure
+      - name: Push Error Log on Failure
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-failure-reports
-          path: |
-            app/build/reports/
-            **/hs_err_pid*.log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B build-log
+          git add -f gradle-build.log
+          git commit -m "ci: capture build error log"
+          git push -f origin build-log
 
       - name: Prepare APK for Release
         run: |
