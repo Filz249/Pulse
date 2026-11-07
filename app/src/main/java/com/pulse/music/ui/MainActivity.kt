@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity() {
                     currentEntry?.destination?.route == Screen.Home.route
 
                 Scaffold(
-                    contentWindowInsets = WindowInsets.systemBars,
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     bottomBar = {
                         if (showMiniPlayer) {
                             MiniPlayer(
@@ -65,7 +66,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Box(Modifier.fillMaxSize().padding(innerPadding)) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .then(if (showMiniPlayer) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+                    ) {
                         NavHost(navController, startDestination = Screen.Home.route) {
                             composable(Screen.Home.route) {
                                 HomeScreen(
