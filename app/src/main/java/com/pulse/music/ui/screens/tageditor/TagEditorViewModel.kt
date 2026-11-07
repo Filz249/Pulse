@@ -1,7 +1,7 @@
 package com.pulse.music.ui.screens.tageditor
 
-import android.app.Activity
 import android.content.Context
+import android.content.IntentSender
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -70,41 +70,58 @@ class TagEditorViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(metadata = updated)
     }
 
-    fun saveTags(activity: Activity?) {
+    /**
+     * Android 11+ requires the user to approve writes to media owned by another app.
+     * The UI launches the returned IntentSender and calls onWritePermissionResult
+     * only after Android reports the user's decision.
+     */
+    fun saveTags(onWritePermissionRequired: (IntentSender) -> Unit) {
+        if (_uiState.value.isSaving) return
+        _uiState.value = _uiState.value.copy(
+            isSaving = true,
+            saveSuccess = null,
+            errorMessage = null
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val request = MediaStore.createWriteRequest(
+                    context.contentResolver,
+                    listOf(Uri.parse(contentUri))
+                )
+                onWritePermissionRequired(request.intentSender)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    errorMessage = "Could not request permission to edit this audio file: ${e.message}"
+                )
+            }
+        } else {
+            persistTags()
+        }
+    }
+
+    fun onWritePermissionResult(granted: Boolean) {
+        if (granted) {
+            persistTags()
+        } else {
+            _uiState.value = _uiState.value.copy(
+                isSaving = false,
+                saveSuccess = false,
+                errorMessage = "Permission denied. The audio tags were not changed."
+            )
+        }
+    }
+
+    private fun persistTags() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true)
-
-            // On Android 11+ (API 30+), writing to non-owned media files requires user approval via MediaStore
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && activity != null) {
-                try {
-                    val uri = Uri.parse(contentUri)
-                    val pendingIntent = MediaStore.createWriteRequest(
-                        context.contentResolver,
-                        listOf(uri)
-                    )
-                    activity.startIntentSenderForResult(
-                        pendingIntent.intentSender,
-                        WRITE_REQUEST_CODE,
-                        null, 0, 0, 0
-                    )
-                } catch (e: Exception) {
-                    // Proceed if permission is already granted
-                }
-            }
-
             val success = updateSongTagsUseCase(filePath, _uiState.value.metadata)
-            if (success) {
-                refreshSongsUseCase()
-            }
+            if (success) refreshSongsUseCase()
             _uiState.value = _uiState.value.copy(
                 isSaving = false,
                 saveSuccess = success,
                 errorMessage = if (!success) "Failed to write metadata tags to file." else null
             )
         }
-    }
-
-    companion object {
-        const val WRITE_REQUEST_CODE = 4001
     }
 }
