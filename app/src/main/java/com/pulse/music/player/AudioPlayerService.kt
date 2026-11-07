@@ -7,6 +7,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
+/**
+ * Foreground service hosting the ExoPlayer instance and MediaSession.
+ * Handles background audio playback, system notifications, lock-screen controls,
+ * and audio focus transitions (such as incoming calls or unplugged headphones).
+ */
 class AudioPlayerService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null

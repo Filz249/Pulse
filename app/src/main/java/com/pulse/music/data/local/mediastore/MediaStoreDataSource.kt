@@ -17,8 +17,8 @@ class MediaStoreDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     /**
-     * Skenira sve lokalne audio datoteke dulje od 20 sekundi
-     * putem Android MediaStore API-ja.
+     * Queries local audio files longer than 20 seconds
+     * using the Android MediaStore content provider.
      */
     suspend fun fetchAudioFiles(): List<Song> = withContext(Dispatchers.IO) {
         val songList = mutableListOf<Song>()
@@ -42,8 +42,9 @@ class MediaStoreDataSource @Inject constructor(
             MediaStore.Audio.Media.DATA
         )
 
+        // Ignore audio tracks shorter than 20 seconds (ringtones, notification sounds)
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= ?"
-        val selectionArgs = arrayOf("20000") // ignoriraj zvukove kraće od 20 sekundi
+        val selectionArgs = arrayOf("20000")
         val sortOrder = "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
 
         try {
@@ -82,9 +83,9 @@ class MediaStoreDataSource @Inject constructor(
                     songList.add(
                         Song(
                             id = id,
-                            title = cursor.getString(titleCol) ?: "Nepoznata pjesma",
-                            artist = cursor.getString(artistCol) ?: "Nepoznati izvođač",
-                            album = cursor.getString(albumCol) ?: "Nepoznati album",
+                            title = cursor.getString(titleCol) ?: "Unknown Title",
+                            artist = cursor.getString(artistCol) ?: "Unknown Artist",
+                            album = cursor.getString(albumCol) ?: "Unknown Album",
                             albumId = albumId,
                             duration = cursor.getLong(durationCol),
                             trackNumber = cursor.getInt(trackCol),

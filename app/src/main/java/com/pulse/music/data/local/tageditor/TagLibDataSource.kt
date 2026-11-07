@@ -7,6 +7,10 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Reads and writes ID3/Vorbis/APE tags in audio files via native TagLib.
+ * Supports MP3, FLAC, M4A, WAV, and OGG formats.
+ */
 @Singleton
 class TagLibDataSource @Inject constructor() {
 

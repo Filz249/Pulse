@@ -60,7 +60,7 @@ class TagEditorViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.value = TagEditorUiState(
                     isLoading = false,
-                    errorMessage = "Greška kod učitavanja: ${e.message}"
+                    errorMessage = "Error reading metadata: ${e.message}"
                 )
             }
         }
@@ -74,7 +74,7 @@ class TagEditorViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true)
 
-            // Na Android 11+ (API 30+) za tuđe datoteke potrebno je zatražiti dozvolu
+            // On Android 11+ (API 30+), writing to non-owned media files requires user approval via MediaStore
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && activity != null) {
                 try {
                     val uri = Uri.parse(contentUri)
@@ -88,7 +88,7 @@ class TagEditorViewModel @Inject constructor(
                         null, 0, 0, 0
                     )
                 } catch (e: Exception) {
-                    // Nastavi dalje ako je već dozvoljeno
+                    // Proceed if permission is already granted
                 }
             }
 
@@ -99,7 +99,7 @@ class TagEditorViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isSaving = false,
                 saveSuccess = success,
-                errorMessage = if (!success) "Neuspješno spremanje tagova." else null
+                errorMessage = if (!success) "Failed to write metadata tags to file." else null
             )
         }
     }

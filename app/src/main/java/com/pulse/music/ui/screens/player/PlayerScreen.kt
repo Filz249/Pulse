@@ -38,10 +38,10 @@ fun PlayerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reprodukcija") },
+                title = { Text("Now Playing") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Natrag")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -85,7 +85,7 @@ fun PlayerScreen(
             // Song & Artist Info
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = song?.title ?: "Nema odabrane pjesme",
+                    text = song?.title ?: "No track playing",
                     style = MaterialTheme.typography.headlineSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -129,7 +129,7 @@ fun PlayerScreen(
                 }
             }
 
-            // Controls
+            // Playback Controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -146,7 +146,7 @@ fun PlayerScreen(
                 IconButton(onClick = { viewModel.skipPrevious() }) {
                     Icon(
                         imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Prethodna",
+                        contentDescription = "Previous",
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -157,7 +157,7 @@ fun PlayerScreen(
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "Pauza" else "Reproduciraj",
+                        contentDescription = if (isPlaying) "Pause" else "Play",
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -165,7 +165,7 @@ fun PlayerScreen(
                 IconButton(onClick = { viewModel.skipNext() }) {
                     Icon(
                         imageVector = Icons.Default.SkipNext,
-                        contentDescription = "Sljedeća",
+                        contentDescription = "Next",
                         modifier = Modifier.size(36.dp)
                     )
                 }

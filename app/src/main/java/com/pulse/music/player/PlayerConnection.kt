@@ -20,6 +20,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Singleton managing the connection to [AudioPlayerService] through [MediaController].
+ * Acts as the bridge between UI ViewModels and the background playback session.
+ */
 @Singleton
 class PlayerConnection @Inject constructor(
     @ApplicationContext private val context: Context

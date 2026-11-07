@@ -48,41 +48,41 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Pulse Music") },
+                title = { Text("Pulse") },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Osvježi")
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                     IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sortiraj")
+                        Icon(Icons.Default.Sort, contentDescription = "Sort")
                     }
                     DropdownMenu(
                         expanded = showSortMenu,
                         onDismissRequest = { showSortMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Po nazivu") },
+                            text = { Text("By Title") },
                             onClick = {
                                 viewModel.onSortOrderChanged(SortOrder.TITLE)
                                 showSortMenu = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Po izvođaču") },
+                            text = { Text("By Artist") },
                             onClick = {
                                 viewModel.onSortOrderChanged(SortOrder.ARTIST)
                                 showSortMenu = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Po datumu dodavanja") },
+                            text = { Text("By Date Added") },
                             onClick = {
                                 viewModel.onSortOrderChanged(SortOrder.DATE_ADDED)
                                 showSortMenu = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Po trajanju") },
+                            text = { Text("By Duration") },
                             onClick = {
                                 viewModel.onSortOrderChanged(SortOrder.DURATION)
                                 showSortMenu = false
@@ -104,11 +104,17 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Potrebna je dozvola za čitanje audio datoteka.")
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        Text(
+                            text = "Permission is required to scan and play local audio files.",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = { permissionState.launchPermissionRequest() }) {
-                            Text("Dozvoli pristup")
+                            Text("Grant Permission")
                         }
                     }
                 }
@@ -119,7 +125,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Pretraži pjesme, izvođače, albume...") },
+                    placeholder = { Text("Search songs, artists, albums...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     singleLine = true
                 )
@@ -129,7 +135,11 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Nema pronađenih pjesama na uređaju.")
+                        Text(
+                            text = "No songs found on this device.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {

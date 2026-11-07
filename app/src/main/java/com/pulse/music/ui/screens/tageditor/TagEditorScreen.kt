@@ -29,10 +29,10 @@ fun TagEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Uredi metapodatke") },
+                title = { Text("Edit Metadata") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Natrag")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -40,7 +40,7 @@ fun TagEditorScreen(
                         onClick = { viewModel.saveTags(activity) },
                         enabled = !state.isSaving
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = "Spremi")
+                        Icon(Icons.Default.Save, contentDescription = "Save")
                     }
                 }
             )
@@ -67,7 +67,7 @@ fun TagEditorScreen(
             ) {
                 if (state.saveSuccess == true) {
                     Text(
-                        "Uspješno spremljeno!",
+                        "Tags successfully updated!",
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -84,14 +84,14 @@ fun TagEditorScreen(
                 OutlinedTextField(
                     value = state.metadata.title,
                     onValueChange = { viewModel.onMetadataChange(state.metadata.copy(title = it)) },
-                    label = { Text("Naslov pjesme") },
+                    label = { Text("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = state.metadata.artist,
                     onValueChange = { viewModel.onMetadataChange(state.metadata.copy(artist = it)) },
-                    label = { Text("Izvođač") },
+                    label = { Text("Artist") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -109,14 +109,14 @@ fun TagEditorScreen(
                     OutlinedTextField(
                         value = state.metadata.year,
                         onValueChange = { viewModel.onMetadataChange(state.metadata.copy(year = it)) },
-                        label = { Text("Godina") },
+                        label = { Text("Year") },
                         modifier = Modifier.weight(1f)
                     )
 
                     OutlinedTextField(
                         value = state.metadata.trackNumber,
                         onValueChange = { viewModel.onMetadataChange(state.metadata.copy(trackNumber = it)) },
-                        label = { Text("Broj pjesme") },
+                        label = { Text("Track Number") },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -124,14 +124,14 @@ fun TagEditorScreen(
                 OutlinedTextField(
                     value = state.metadata.genre,
                     onValueChange = { viewModel.onMetadataChange(state.metadata.copy(genre = it)) },
-                    label = { Text("Žanr") },
+                    label = { Text("Genre") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = state.metadata.lyrics ?: "",
                     onValueChange = { viewModel.onMetadataChange(state.metadata.copy(lyrics = it)) },
-                    label = { Text("Tekst pjesme (Lyrics)") },
+                    label = { Text("Lyrics") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(160.dp),
@@ -151,7 +151,7 @@ fun TagEditorScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Spremi izmjene")
+                        Text("Save Changes")
                     }
                 }
             }
