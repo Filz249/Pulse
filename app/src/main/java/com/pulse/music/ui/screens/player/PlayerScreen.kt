@@ -1,7 +1,9 @@
 package com.pulse.music.ui.screens.player
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -35,6 +37,7 @@ fun PlayerScreen(
     var seekPosition by remember { mutableFloatStateOf(0f) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text("Now Playing") },
@@ -47,134 +50,136 @@ fun PlayerScreen(
         },
         modifier = modifier
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceAround
         ) {
-            // Album art cover
-            Surface(
+            val artworkSize = minOf(maxWidth - 40.dp, maxHeight * 0.42f, 340.dp)
+                .coerceAtLeast(160.dp)
+
+            Column(
                 modifier = Modifier
-                    .size(300.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 8.dp
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                if (song?.albumArtUri != null) {
-                    AsyncImage(
-                        model = song?.albumArtUri,
-                        contentDescription = "Cover",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.MusicNote,
-                            contentDescription = null,
-                            modifier = Modifier.size(96.dp)
+                Surface(
+                    modifier = Modifier
+                        .size(artworkSize)
+                        .clip(RoundedCornerShape(18.dp)),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 8.dp
+                ) {
+                    if (song?.albumArtUri != null) {
+                        AsyncImage(
+                            model = song?.albumArtUri,
+                            contentDescription = "Cover",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = null,
+                                modifier = Modifier.size(96.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
-            }
 
-            // Song & Artist Info
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = song?.title ?: "No track playing",
-                    style = MaterialTheme.typography.headlineSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = song?.artist ?: "-",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
-            }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = song?.title ?: "No track playing",
+                        style = MaterialTheme.typography.headlineSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = song?.artist ?: "-",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            // Seekbar
-            Column(modifier = Modifier.fillMaxWidth()) {
-                val progress = if (isUserSeeking) seekPosition else (currentPosition.toFloat() / duration).coerceIn(0f, 1f)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    val progress = if (isUserSeeking) seekPosition
+                        else (currentPosition.toFloat() / duration).coerceIn(0f, 1f)
 
-                Slider(
-                    value = progress,
-                    onValueChange = {
-                        isUserSeeking = true
-                        seekPosition = it
-                    },
-                    onValueChangeFinished = {
-                        viewModel.seekTo((seekPosition * duration).toLong())
-                        isUserSeeking = false
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Slider(
+                        value = progress,
+                        onValueChange = {
+                            isUserSeeking = true
+                            seekPosition = it
+                        },
+                        onValueChangeFinished = {
+                            viewModel.seekTo((seekPosition * duration).toLong())
+                            isUserSeeking = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val position = if (isUserSeeking) (seekPosition * duration).toLong() else currentPosition
+                        Text(formatTime(position), style = MaterialTheme.typography.bodySmall)
+                        Text(formatTime(duration), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val pos = if (isUserSeeking) (seekPosition * duration).toLong() else currentPosition
-                    Text(formatTime(pos), style = MaterialTheme.typography.bodySmall)
-                    Text(formatTime(duration), style = MaterialTheme.typography.bodySmall)
-                }
-            }
+                    IconButton(onClick = { viewModel.toggleShuffle() }) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = "Shuffle",
+                            tint = if (shuffleMode) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
-            // Playback Controls
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { viewModel.toggleShuffle() }) {
-                    Icon(
-                        imageVector = Icons.Default.Shuffle,
-                        contentDescription = "Shuffle",
-                        tint = if (shuffleMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    IconButton(onClick = { viewModel.skipPrevious() }) {
+                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(36.dp))
+                    }
 
-                IconButton(onClick = { viewModel.skipPrevious() }) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Previous",
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
+                    FilledIconButton(
+                        onClick = { viewModel.togglePlayPause() },
+                        modifier = Modifier.size(68.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            modifier = Modifier.size(38.dp)
+                        )
+                    }
 
-                FilledIconButton(
-                    onClick = { viewModel.togglePlayPause() },
-                    modifier = Modifier.size(64.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
+                    IconButton(onClick = { viewModel.skipNext() }) {
+                        Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(36.dp))
+                    }
 
-                IconButton(onClick = { viewModel.skipNext() }) {
-                    Icon(
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "Next",
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
-
-                IconButton(onClick = { viewModel.toggleRepeatMode() }) {
-                    Icon(
-                        imageVector = if (repeatMode == 1) Icons.Default.RepeatOne else Icons.Default.Repeat,
-                        contentDescription = "Repeat",
-                        tint = if (repeatMode != 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    IconButton(onClick = { viewModel.toggleRepeatMode() }) {
+                        Icon(
+                            imageVector = if (repeatMode == 1) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                            contentDescription = "Repeat",
+                            tint = if (repeatMode != 0) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

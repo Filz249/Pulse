@@ -7,25 +7,8 @@
 
 <p align="center">
   <a href="https://github.com/Filz249/Pulse/releases/download/latest/Pulse.apk">
-    <img src="https://img.shields.io/badge/DOWNLOAD_PULSE-ANDROID_APK-FFB347?style=for-the-badge&labelColor=171313" alt="Download Pulse for Android">
+    <img src="assets/pulse-download.svg" width="286" height="76" alt="Download Pulse for Android">
   </a>
-  &nbsp;
-  <a href="https://github.com/Filz249/Pulse/releases/latest">
-    <img src="https://img.shields.io/badge/VIEW_RELEASES-171313?style=for-the-badge&labelColor=292322" alt="View releases">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml">
-    <img src="https://github.com/Filz249/Pulse/actions/workflows/build-apk.yml/badge.svg" alt="Build status">
-  </a>
-  <img src="https://img.shields.io/badge/PLATFORM-ANDROID-FFB347?style=flat-square" alt="Android platform">
-  <img src="https://img.shields.io/badge/PRIVACY-NO_TRACKING-292322?style=flat-square" alt="No tracking">
-  <img src="https://img.shields.io/badge/PLAYBACK-OFFLINE-292322?style=flat-square" alt="Offline playback">
-</p>
-
-<p align="center">
-  <img src="assets/pulse-brand-poster.webp" alt="Pulse brand direction and app concept" width="520">
 </p>
 
 ---
@@ -66,17 +49,9 @@ Pulse is designed around a simple principle: your music library belongs to you.
 - No streaming service dependency.
 - Your library and recently played history stay on your device.
 
-## Download
+## Download and installation
 
-The latest Android APK is published automatically after a successful GitHub Actions build.
-
-<p align="center">
-  <a href="https://github.com/Filz249/Pulse/releases/download/latest/Pulse.apk">
-    <img src="https://img.shields.io/badge/DOWNLOAD_PULSE-GET_THE_LATEST_ANDROID_APK-FFB347?style=for-the-badge&labelColor=171313" alt="Download the latest Pulse APK">
-  </a>
-</p>
-
-### Installation
+Use the download button above to get the latest Android APK.
 
 1. Download the APK to your Android device.
 2. Open the downloaded file.

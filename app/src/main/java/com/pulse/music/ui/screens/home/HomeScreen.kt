@@ -82,7 +82,7 @@ fun HomeScreen(
         )
     }
 
-    Scaffold(modifier = modifier) { padding ->
+    Scaffold(modifier = modifier, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         if (!permissionState.status.isGranted) {
             Box(Modifier.fillMaxSize().padding(padding).padding(24.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

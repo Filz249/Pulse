@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="286" height="76" viewBox="0 0 286 76" role="img" aria-labelledby="title desc">
+  <title id="title">Download Pulse for Android</title>
+  <desc id="desc">Download the latest Pulse Android APK.</desc>
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD18A"/>
+      <stop offset="0.55" stop-color="#FFB347"/>
+      <stop offset="1" stop-color="#F49A32"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.22"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="3" y="3" width="280" height="68" rx="17" fill="url(#amber)"/>
+    <rect x="3.75" y="3.75" width="278.5" height="66.5" rx="16.25" fill="none" stroke="#FFE2B8" stroke-opacity=".7"/>
+    <circle cx="39" cy="37" r="21" fill="#271A10" fill-opacity=".12"/>
+    <path d="M39 24v23m-9-9 9 9 9-9M27 53h24" fill="none" stroke="#25190F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="72" y="34" fill="#24170D" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing=".25">DOWNLOAD PULSE</text>
+    <text x="73" y="51" fill="#51351D" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="1.15">ANDROID APK  ·  LATEST BUILD</text>
+    <path d="M254 31l7 6-7 6" fill="none" stroke="#2A1B0F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
