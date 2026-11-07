@@ -1,6 +1,9 @@
 package com.pulse.music.player
 
 import android.content.Intent
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.DefaultMediaNotificationProvider
+import com.pulse.music.R
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
@@ -12,12 +15,22 @@ import androidx.media3.session.MediaSessionService
  * Handles background audio playback, system notifications, lock-screen controls,
  * and audio focus transitions (such as incoming calls or unplugged headphones).
  */
+@OptIn(UnstableApi::class)
 class AudioPlayerService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
     override fun onCreate() {
         super.onCreate()
+
+        // Give Pulse its own playback notification channel on Android versions
+        // where the Media3 notification provider controls the notification.
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setChannelId("pulse_playback")
+                .setChannelName(R.string.media_notification_channel)
+                .build()
+        )
 
         val audioAttributes = AudioAttributes.Builder()
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)

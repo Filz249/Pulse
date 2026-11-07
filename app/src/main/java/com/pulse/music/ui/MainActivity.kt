@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.pulse.music.update.UpdateChecker
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +32,7 @@ import com.pulse.music.ui.screens.home.HomeScreen
 import com.pulse.music.ui.screens.home.HomeViewModel
 import com.pulse.music.ui.screens.player.PlayerScreen
 import com.pulse.music.ui.screens.player.PlayerViewModel
+import com.pulse.music.ui.screens.settings.SettingsScreen
 import com.pulse.music.ui.screens.tageditor.TagEditorScreen
 import com.pulse.music.ui.screens.tageditor.TagEditorViewModel
 import com.pulse.music.ui.theme.PulseTheme
@@ -40,6 +44,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        lifecycleScope.launch { UpdateChecker.checkIfDue(applicationContext) }
 
         setContent {
             PulseTheme {
@@ -78,12 +83,16 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     homeViewModel,
                                     onSongClick = { list, index -> homeViewModel.playSong(list, index) },
+                                    onOpenSettings = { navController.navigate(Screen.Settings.route) },
                                     onEditSongTags = { song ->
                                         navController.navigate(
                                             Screen.TagEditor.createRoute(song.filePath, song.uri.toString())
                                         )
                                     }
                                 )
+                            }
+                            composable(Screen.Settings.route) {
+                                SettingsScreen(onBackClick = { navController.popBackStack() })
                             }
                             composable(Screen.Player.route) {
                                 val playerViewModel: PlayerViewModel = hiltViewModel()

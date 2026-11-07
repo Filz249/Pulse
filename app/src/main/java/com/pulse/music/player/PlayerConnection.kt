@@ -1,6 +1,8 @@
 package com.pulse.music.player
 
 import android.content.ComponentName
+import android.net.Uri
+import com.pulse.music.R
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -88,7 +90,7 @@ class PlayerConnection @Inject constructor(
                     .setTitle(song.title)
                     .setArtist(song.artist)
                     .setAlbumTitle(song.album)
-                    .setArtworkUri(song.albumArtUri)
+                    .setArtworkUri(song.albumArtUri ?: Uri.parse("android.resource://${context.packageName}/${R.drawable.ic_pulse_mark}"))
                     .build()
 
                 MediaItem.Builder()
