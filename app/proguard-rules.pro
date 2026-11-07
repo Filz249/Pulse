@@ -1,5 +1,5 @@
 # Pulse Proguard Rules
--keep class com.aman.taglib.** { *; }
+-keep class aman.taglib.** { *; }
 -keepclassmembers class * {
     native <methods>;
 }

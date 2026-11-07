@@ -97,7 +97,12 @@ dependencies {
 
 // Disable AAR metadata verification task so TagLib (which specified compileSdk 37)
 // builds cleanly against the standard Android compileSdk 35
-tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+tasks.matching { it.name.contains("AarMetadata", ignoreCase = true) }.configureEach {
     enabled = false
 }
 
+afterEvaluate {
+    tasks.matching { it.name.contains("AarMetadata", ignoreCase = true) }.configureEach {
+        enabled = false
+    }
+}

@@ -1,6 +1,6 @@
 package com.pulse.music.data.local.tageditor
 
-import com.aman.taglib.TagLib
+import aman.taglib.TagLib
 import com.pulse.music.domain.model.SongMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,8 +16,9 @@ class TagLibDataSource @Inject constructor() {
 
     suspend fun readMetadata(filePath: String): SongMetadata = withContext(Dispatchers.IO) {
         try {
-            val metadata = TagLib.getMetadata(filePath)
-            val artwork = TagLib.getArtwork(filePath)
+            val metadata = TagLib.getMetadata(filePath) ?: emptyMap()
+            val artworks = TagLib.getArtwork(filePath)
+            val artworkBytes = artworks?.firstOrNull()?.data
 
             SongMetadata(
                 title = metadata["TITLE"] ?: "",
@@ -27,7 +28,7 @@ class TagLibDataSource @Inject constructor() {
                 genre = metadata["GENRE"] ?: "",
                 trackNumber = metadata["TRACKNUMBER"] ?: metadata["TRACK"] ?: "",
                 lyrics = metadata["LYRICS"] ?: metadata["UNSYNCEDLYRICS"],
-                albumArt = artwork
+                albumArt = artworkBytes
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -53,7 +54,7 @@ class TagLibDataSource @Inject constructor() {
             val success = TagLib.setMetadata(filePath, tags)
 
             if (success && metadata.albumArt != null) {
-                TagLib.setArtwork(filePath, metadata.albumArt)
+                TagLib.setArtwork(filePath, metadata.albumArt, "image/jpeg", "Cover")
             }
 
             success
