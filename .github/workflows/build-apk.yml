@@ -33,22 +33,15 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace 2>&1 | tee gradle-build.log
-
-      - name: Push Error Log on Failure
-        if: failure()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B build-log
-          git add -f gradle-build.log
-          git commit -m "ci: capture build error log"
-          git push -f origin build-log
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Prepare APK for Release
         run: |
           mkdir -p release-output
-          cp app/build/outputs/apk/debug/app-debug.apk release-output/Pulse.apk
+          APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          echo "Found APK: $APK_FILE"
+          cp "$APK_FILE" release-output/Pulse.apk
+          ls -la release-output/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -78,7 +71,6 @@ jobs:
             3. Grant audio permission on first launch and enjoy ad-free offline music!
           draft: false
           prerelease: false
-          files: |
-            release-output/Pulse.apk
+          files: release-output/Pulse.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
