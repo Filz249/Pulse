@@ -15,6 +15,7 @@ data class UpdateStatus(
     val state: State = State.NOT_CHECKED,
     val message: String = "Update status has not been checked yet.",
     val latestRelease: String? = null,
+    val latestCommit: String? = null,
     val downloadUrl: String? = null,
     val checkedAt: Long = 0L
 ) {
@@ -26,6 +27,7 @@ object UpdateChecker {
     private const val KEY_STATE = "state"
     private const val KEY_MESSAGE = "message"
     private const val KEY_RELEASE = "release"
+    private const val KEY_COMMIT = "release_commit"
     private const val KEY_URL = "download_url"
     private const val KEY_CHECKED_AT = "checked_at"
     private const val CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
@@ -44,6 +46,7 @@ object UpdateChecker {
             message = prefs.getString(KEY_MESSAGE, "Update status has not been checked yet.")
                 ?: "Update status has not been checked yet.",
             latestRelease = prefs.getString(KEY_RELEASE, null),
+            latestCommit = prefs.getString(KEY_COMMIT, null),
             downloadUrl = prefs.getString(KEY_URL, null),
             checkedAt = prefs.getLong(KEY_CHECKED_AT, 0L)
         )
@@ -52,8 +55,18 @@ object UpdateChecker {
     suspend fun checkIfDue(context: Context): UpdateStatus = mutex.withLock {
         val current = cached(context)
         val fresh = current.checkedAt > 0L &&
-            System.currentTimeMillis() - current.checkedAt < CHECK_INTERVAL_MS
-        if (fresh) current else fetchAndStore(context)
+            System.currentTimeMillis() - current.checkedAt < CHECK_INTERVAL_MS &&
+            (current.state != UpdateStatus.State.AVAILABLE || current.latestCommit != null)
+        if (fresh) {
+            if (current.state == UpdateStatus.State.AVAILABLE) {
+                val url = current.downloadUrl
+                val commit = current.latestCommit
+                if (url != null && commit != null) UpdateInstaller.ensureDownload(context, url, commit)
+            }
+            current
+        } else {
+            fetchAndStore(context)
+        }
     }
 
     suspend fun checkNow(context: Context): UpdateStatus = mutex.withLock {
@@ -119,15 +132,24 @@ object UpdateChecker {
                     latestRelease = release.optString("name").ifBlank { release.optString("tag_name") },
                     downloadUrl = downloadUrl
                 )
-            }.copy(checkedAt = System.currentTimeMillis())
+            }.copy(latestCommit = commit, checkedAt = System.currentTimeMillis())
 
             prefs.edit()
                 .putString(KEY_STATE, result.state.name)
                 .putString(KEY_MESSAGE, result.message)
                 .putString(KEY_RELEASE, result.latestRelease)
+                .putString(KEY_COMMIT, result.latestCommit)
                 .putString(KEY_URL, result.downloadUrl)
                 .putLong(KEY_CHECKED_AT, result.checkedAt)
                 .apply()
+
+            if (result.state == UpdateStatus.State.AVAILABLE) {
+                val url = result.downloadUrl
+                val commitHash = result.latestCommit
+                if (url != null && commitHash != null) {
+                    UpdateInstaller.ensureDownload(context, url, commitHash)
+                }
+            }
             result
         } catch (exception: Exception) {
             val failed = UpdateStatus(
@@ -139,6 +161,7 @@ object UpdateChecker {
                 .putString(KEY_STATE, failed.state.name)
                 .putString(KEY_MESSAGE, failed.message)
                 .remove(KEY_RELEASE)
+                .remove(KEY_COMMIT)
                 .remove(KEY_URL)
                 .putLong(KEY_CHECKED_AT, failed.checkedAt)
                 .apply()

@@ -1,7 +1,5 @@
 package com.pulse.music.ui.screens.settings
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +28,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -51,6 +50,10 @@ import com.pulse.music.BuildConfig
 import com.pulse.music.ui.theme.PulseAmber
 import com.pulse.music.update.UpdateChecker
 import com.pulse.music.update.UpdateStatus
+import com.pulse.music.update.UpdateDownloadState
+import com.pulse.music.update.UpdateInstaller
+import com.pulse.music.update.UpdateInstallResult
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
@@ -61,6 +64,8 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var updateStatus by remember { mutableStateOf(UpdateChecker.cached(context)) }
+    var downloadInfo by remember { mutableStateOf(UpdateInstaller.getDownloadInfo(context)) }
+    var installMessage by remember { mutableStateOf<String?>(null) }
     var checking by remember { mutableStateOf(false) }
 
     suspend fun checkUpdates(force: Boolean) {
@@ -71,6 +76,46 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         checkUpdates(force = false)
+    }
+
+    LaunchedEffect(updateStatus.state, updateStatus.latestCommit, updateStatus.downloadUrl) {
+        if (updateStatus.state == UpdateStatus.State.AVAILABLE) {
+            val url = updateStatus.downloadUrl
+            val commit = updateStatus.latestCommit
+            if (url != null && commit != null) {
+                UpdateInstaller.ensureDownload(context, url, commit)
+                while (true) {
+                    val latest = UpdateInstaller.getDownloadInfo(context)
+                    downloadInfo = latest
+                    if (latest.state !in setOf(
+                            UpdateDownloadState.PENDING,
+                            UpdateDownloadState.DOWNLOADING,
+                            UpdateDownloadState.PAUSED
+                        )
+                    ) break
+                    delay(900)
+                }
+            }
+        } else {
+            downloadInfo = UpdateInstaller.getDownloadInfo(context)
+        }
+    }
+
+    fun beginUpdateDownload() {
+        val url = updateStatus.downloadUrl ?: return
+        val commit = updateStatus.latestCommit ?: return
+        UpdateInstaller.ensureDownload(context, url, commit)
+        downloadInfo = UpdateInstaller.getDownloadInfo(context)
+        installMessage = null
+    }
+
+    fun launchUpdateInstaller() {
+        installMessage = when (UpdateInstaller.installDownloadedUpdate(context)) {
+            UpdateInstallResult.LAUNCHED -> "Opening Android's installer. Follow its confirmation steps to finish updating Pulse."
+            UpdateInstallResult.PERMISSION_REQUIRED -> "Allow Pulse to install updates in Android settings, return here, then tap Install update again."
+            UpdateInstallResult.NOT_READY -> "The update file is not ready yet. Check the download status and try again."
+            UpdateInstallResult.ERROR -> "Android could not open the installer. You can retry from this screen."
+        }
     }
 
     Scaffold(
@@ -117,17 +162,49 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                         UpdateStatus.State.AVAILABLE -> {
                             Text(updateStatus.latestRelease ?: "Latest release",
                                 style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            Button(
-                                onClick = {
-                                    updateStatus.downloadUrl?.let { url ->
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                            when (downloadInfo.state) {
+                                UpdateDownloadState.DOWNLOADING -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                        Text("Downloading update automatically… ${downloadInfo.progressPercent}%",
+                                            style = MaterialTheme.typography.bodyMedium)
+                                        LinearProgressIndicator(
+                                            progress = downloadInfo.progressPercent / 100f,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
                                     }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Default.Download, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Download update")
+                                }
+                                UpdateDownloadState.PENDING, UpdateDownloadState.PAUSED -> {
+                                    Text(
+                                        if (downloadInfo.state == UpdateDownloadState.PAUSED) "Update download is paused." else "Update download is queued…",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                }
+                                UpdateDownloadState.DOWNLOADED -> {
+                                    Button(onClick = { launchUpdateInstaller() }, modifier = Modifier.fillMaxWidth()) {
+                                        Icon(Icons.Default.SystemUpdate, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Install update")
+                                    }
+                                }
+                                UpdateDownloadState.FAILED -> {
+                                    OutlinedButton(onClick = { beginUpdateDownload() }, modifier = Modifier.fillMaxWidth()) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Retry update download")
+                                    }
+                                }
+                                UpdateDownloadState.NOT_STARTED -> {
+                                    Button(onClick = { beginUpdateDownload() }, modifier = Modifier.fillMaxWidth()) {
+                                        Icon(Icons.Default.Download, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Download update")
+                                    }
+                                }
+                            }
+                            installMessage?.let {
+                                Text(it, style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         UpdateStatus.State.UP_TO_DATE -> {
@@ -154,13 +231,13 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                             "Last checked: " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
                                 .format(Date(updateStatus.checkedAt))
                         } else {
-                            "Updates are checked automatically when Pulse is opened, at most once every 24 hours."
+                            "Pulse checks for updates when opened and downloads new versions automatically when one is available."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "Android asks you to confirm installation of downloaded updates. Pulse never installs an APK silently.",
+                        "When the download is ready, tap Install update. Android will show its normal installation confirmation; Pulse cannot silently install apps.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

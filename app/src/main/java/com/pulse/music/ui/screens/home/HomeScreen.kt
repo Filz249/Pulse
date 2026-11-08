@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -256,7 +257,8 @@ private fun PulseMark(modifier: Modifier = Modifier) {
     Surface(modifier, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.GraphicEq, contentDescription = "Pulse", tint = MaterialTheme.colorScheme.primary,
+            Icon(painter = painterResource(com.pulse.music.R.drawable.ic_pulse_equalizer),
+                contentDescription = "Pulse", tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxSize(0.66f))
         }
     }

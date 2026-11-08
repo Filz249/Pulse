@@ -13,8 +13,9 @@ android {
         applicationId = "com.pulse.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        val ciBuildNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        versionCode = ciBuildNumber
+        versionName = if (ciBuildNumber == 1) "1.0.0" else "1.0.$ciBuildNumber"
         val gitCommit = System.getenv("GITHUB_SHA") ?: "local"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

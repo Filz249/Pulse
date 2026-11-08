@@ -215,14 +215,18 @@ class TagEditorViewModel @Inject constructor(
             }
 
             var failedArtworkPaths: List<String> = emptyList()
-            if (current.albumArtworkChanged && current.metadata.albumArt != null) {
-                val paths = (albumSongs.map { it.filePath } + filePath)
+            val pathsToRescan = if (current.albumArtworkChanged && current.metadata.albumArt != null) {
+                val albumPaths = (albumSongs.map { it.filePath } + filePath)
                     .filter { it.isNotBlank() }
                     .distinct()
-                failedArtworkPaths = updateAlbumArtworkUseCase(paths, current.metadata.albumArt)
-                rescanAlbumFiles(paths)
+                failedArtworkPaths = updateAlbumArtworkUseCase(albumPaths, current.metadata.albumArt)
+                albumPaths
+            } else {
+                listOf(filePath).filter { it.isNotBlank() }
             }
 
+            // Re-index even text-only tag edits so MediaStore immediately reflects the new tags.
+            rescanAlbumFiles(pathsToRescan)
             refreshSongsUseCase()
             val artworkSucceeded = failedArtworkPaths.isEmpty()
             _uiState.value = _uiState.value.copy(
