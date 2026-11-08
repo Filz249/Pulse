@@ -21,7 +21,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
+    signingConfigs {
+        create("pulseDistribution") {
+            val keystorePath = System.getenv("PULSE_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("PULSE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PULSE_KEY_ALIAS")
+                keyPassword = System.getenv("PULSE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
+        debug {
+            // When a stable GitHub Actions keystore is configured, sign every distributed APK
+            // with it so Android can update an existing installation in place.
+            if (!System.getenv("PULSE_KEYSTORE_PATH").isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("pulseDistribution")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

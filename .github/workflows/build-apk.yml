@@ -43,8 +43,25 @@ jobs:
           chmod +x ./gradlew
           ./gradlew --version
 
+      - name: Prepare optional stable APK signing key
+        shell: bash
+        env:
+          PULSE_KEYSTORE_BASE64: ${{ secrets.PULSE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${PULSE_KEYSTORE_BASE64}" ]]; then
+            echo "${PULSE_KEYSTORE_BASE64}" | base64 --decode > "${RUNNER_TEMP}/pulse-distribution.jks"
+            echo "PULSE_KEYSTORE_PATH=${RUNNER_TEMP}/pulse-distribution.jks" >> "${GITHUB_ENV}"
+          else
+            echo "No stable signing keystore configured; this build will use the runner's temporary Android debug key."
+          fi
+
       - name: Run unit tests and build a clean debug APK
         shell: bash
+        env:
+          PULSE_KEYSTORE_PASSWORD: ${{ secrets.PULSE_KEYSTORE_PASSWORD }}
+          PULSE_KEY_ALIAS: ${{ secrets.PULSE_KEY_ALIAS }}
+          PULSE_KEY_PASSWORD: ${{ secrets.PULSE_KEY_PASSWORD }}
         run: |
           set -o pipefail
           ./gradlew --no-daemon --stacktrace --console=plain clean testDebugUnitTest assembleDebug 2>&1 | tee build.log
