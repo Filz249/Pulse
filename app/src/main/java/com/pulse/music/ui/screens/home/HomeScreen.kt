@@ -49,6 +49,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onSongClick: (List<Song>, Int) -> Unit,
     onEditSongTags: (Song) -> Unit,
+    onAlbumClick: (Long) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -192,7 +193,7 @@ fun HomeScreen(
                             if (albums.isNotEmpty()) item {
                                 SectionHeading("Albums", "Albums in your collection")
                                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                    albums.take(12).forEach { group -> SquareCard(group.first(), group.first().album) { onSongClick(group, 0) } }
+                                    albums.take(12).forEach { group -> SquareCard(group.first(), group.first().album) { onAlbumClick(group.first().albumId) } }
                                 }
                             }
                             if (artists.isNotEmpty()) item {
@@ -230,7 +231,7 @@ fun HomeScreen(
                     }
                     LibraryCategory.ALBUMS -> {
                         if (albums.isEmpty()) item { EmptyHint("Albums appear here when audio is added to your library.") }
-                        items(albums) { group -> CompactLibraryRow(group.first(), group.first().album, "${group.size} tracks") { onSongClick(group, 0) } }
+                        items(albums) { group -> CompactLibraryRow(group.first(), group.first().album, "${group.size} tracks") { onAlbumClick(group.first().albumId) } }
                     }
                     LibraryCategory.ARTISTS -> {
                         if (artists.isEmpty()) item { EmptyHint("Artists appear here when audio is added to your library.") }
