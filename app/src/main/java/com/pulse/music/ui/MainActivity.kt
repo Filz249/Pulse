@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -82,13 +83,15 @@ class MainActivity : ComponentActivity() {
             var selectedPalette by rememberSaveable {
                 mutableStateOf(PulsePalette.fromKey(themePreferences.getString("palette", null)))
             }
+            var customHex by rememberSaveable { mutableStateOf(themePreferences.getString("custom_accent_hex", "#FFB347") ?: "#FFB347") }
+            var customAccent by remember { mutableStateOf(runCatching { Color(android.graphics.Color.parseColor(customHex)) }.getOrNull()) }
             var showBrandSplash by rememberSaveable { mutableStateOf(true) }
             LaunchedEffect(Unit) {
                 delay(850)
                 showBrandSplash = false
             }
 
-            PulseTheme(palette = selectedPalette) {
+            PulseTheme(palette = selectedPalette, customPrimary = customAccent) {
                 if (showBrandSplash) {
                     BrandSplashScreen()
                 } else {
@@ -113,6 +116,17 @@ class MainActivity : ComponentActivity() {
                                     selectedPalette = palette
                                     themePreferences.edit().putString("palette", palette.key).apply()
                                     PulseWidgetProvider.refreshAll(context)
+                                },
+                                customHex = customHex,
+                                onCustomHexChange = { customHex = it },
+                                onApplyCustomAccent = {
+                                    val value = if (customHex.startsWith("#")) customHex else "#"+customHex
+                                    runCatching { Color(android.graphics.Color.parseColor(value)) }.onSuccess { color ->
+                                        customAccent = color
+                                        customHex = value
+                                        themePreferences.edit().putString("custom_accent_hex", value).apply()
+                                        PulseWidgetProvider.refreshAll(context)
+                                    }
                                 },
                                 onEqualizer = {
                                     scope.launch {
@@ -310,7 +324,10 @@ private fun PulseDrawerContent(
     onPaletteSelected: (PulsePalette) -> Unit,
     onEqualizer: () -> Unit,
     onSettings: () -> Unit,
-    onAddWidget: () -> Unit
+    onAddWidget: () -> Unit,
+    customHex: String,
+    onCustomHexChange: (String) -> Unit,
+    onApplyCustomAccent: () -> Unit
 ) {
     ModalDrawerSheet(
         drawerContainerColor = MaterialTheme.colorScheme.surface,
@@ -365,6 +382,17 @@ private fun PulseDrawerContent(
                 Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(10.dp))
                 Text("App themes", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedTextField(
+                value = customHex,
+                onValueChange = onCustomHexChange,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                label = { Text("Custom accent (HEX)") },
+                placeholder = { Text("#FFB347") },
+                singleLine = true
+            )
+            Button(onClick = onApplyCustomAccent, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Text("Apply custom color")
             }
             PulsePalette.values().forEach { palette ->
                 NavigationDrawerItem(
