@@ -16,9 +16,21 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +41,7 @@ import androidx.navigation.navArgument
 import com.pulse.music.ui.components.MiniPlayer
 import com.pulse.music.ui.navigation.Screen
 import com.pulse.music.ui.screens.home.HomeScreen
+import com.pulse.music.ui.screens.home.HomeNavigationTab
 import com.pulse.music.ui.screens.home.HomeViewModel
 import com.pulse.music.ui.screens.album.AlbumScreen
 import com.pulse.music.ui.screens.player.PlayerScreen
@@ -51,24 +64,34 @@ class MainActivity : ComponentActivity() {
             PulseTheme {
                 val navController = rememberNavController()
                 val currentEntry by navController.currentBackStackEntryAsState()
+                var selectedHomeTab by rememberSaveable { mutableStateOf(HomeNavigationTab.HOME) }
+                val isHomeDestination = currentEntry?.destination?.route == Screen.Home.route
                 val homeViewModel: HomeViewModel = hiltViewModel()
                 val currentSong by homeViewModel.playerConnection.currentSong.collectAsState()
                 val isPlaying by homeViewModel.playerConnection.isPlaying.collectAsState()
-                val showMiniPlayer = currentSong != null &&
-                    currentEntry?.destination?.route == Screen.Home.route
+                val showMiniPlayer = currentSong != null && isHomeDestination
 
                 Scaffold(
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     bottomBar = {
-                        if (showMiniPlayer) {
-                            MiniPlayer(
-                                song = currentSong,
-                                isPlaying = isPlaying,
-                                onTogglePlayPause = { homeViewModel.playerConnection.togglePlayPause() },
-                                onSkipNext = { homeViewModel.playerConnection.skipNext() },
-                                onExpandClick = { navController.navigate(Screen.Player.route) },
-                                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-                            )
+                        if (isHomeDestination) {
+                            Column {
+                                if (showMiniPlayer) {
+                                    MiniPlayer(
+                                        song = currentSong,
+                                        isPlaying = isPlaying,
+                                        onTogglePlayPause = { homeViewModel.playerConnection.togglePlayPause() },
+                                        onSkipNext = { homeViewModel.playerConnection.skipNext() },
+                                        onExpandClick = { navController.navigate(Screen.Player.route) }
+                                    )
+                                }
+                                NavigationBar(windowInsets = WindowInsets.navigationBars) {
+                                    NavigationBarItem(selected = selectedHomeTab == HomeNavigationTab.HOME, onClick = { selectedHomeTab = HomeNavigationTab.HOME }, icon = { Icon(Icons.Default.Home, contentDescription = null) }, label = { Text("Home") })
+                                    NavigationBarItem(selected = selectedHomeTab == HomeNavigationTab.SEARCH, onClick = { selectedHomeTab = HomeNavigationTab.SEARCH }, icon = { Icon(Icons.Default.Search, contentDescription = null) }, label = { Text("Search") })
+                                    NavigationBarItem(selected = selectedHomeTab == HomeNavigationTab.PLAYLISTS, onClick = { selectedHomeTab = HomeNavigationTab.PLAYLISTS }, icon = { Icon(Icons.Default.QueueMusic, contentDescription = null) }, label = { Text("Playlists") })
+                                    NavigationBarItem(selected = selectedHomeTab == HomeNavigationTab.CREATE, onClick = { selectedHomeTab = HomeNavigationTab.CREATE }, icon = { Icon(Icons.Default.Add, contentDescription = null) }, label = { Text("Create") })
+                                }
+                            }
                         }
                     }
                 ) { innerPadding ->
@@ -77,7 +100,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .then(if (showMiniPlayer) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+                            .then(if (isHomeDestination) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars))
                     ) {
                         NavHost(navController, startDestination = Screen.Home.route) {
                             composable(Screen.Home.route) {
@@ -86,6 +109,8 @@ class MainActivity : ComponentActivity() {
                                     onSongClick = { list, index -> homeViewModel.playSong(list, index) },
                                     onAlbumClick = { albumId -> navController.navigate(Screen.Album.createRoute(albumId)) },
                                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                                    selectedBottomTab = selectedHomeTab,
+                                    onBottomTabChange = { selectedHomeTab = it },
                                     onEditSongTags = { song ->
                                         navController.navigate(
                                             Screen.TagEditor.createRoute(song.filePath, song.uri.toString(), song.albumId)
