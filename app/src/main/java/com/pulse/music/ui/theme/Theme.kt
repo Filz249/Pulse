@@ -25,11 +25,13 @@ val LightText = Color(0xFFF6EEE5)
 val MutedText = Color(0xFFB9AAA0)
 
 @Composable
-fun PulseTheme(palette: PulsePalette = PulsePalette.AMBER, content: @Composable () -> Unit) {
+fun PulseTheme(palette: PulsePalette = PulsePalette.AMBER, customPrimary: Color? = null, content: @Composable () -> Unit) {
+    val primary = customPrimary ?: palette.primary
+    val secondary = customPrimary?.copy(alpha = 0.82f) ?: palette.secondary
     val colors = darkColorScheme(
-        primary = palette.primary,
+        primary = primary,
         onPrimary = Color(0xFF1B120A),
-        secondary = palette.secondary,
+        secondary = secondary,
         onSecondary = Color(0xFF1B120A),
         background = DarkBackground,
         surface = DarkSurface,
