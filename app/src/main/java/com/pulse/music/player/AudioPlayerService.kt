@@ -69,7 +69,7 @@ class AudioPlayerService : MediaSessionService() {
     private fun updateWidget(player: ExoPlayer) {
         val title = player.mediaMetadata.title?.toString()?.takeIf { it.isNotBlank() } ?: "Nothing playing"
         val artist = player.mediaMetadata.artist?.toString()?.takeIf { it.isNotBlank() } ?: "Open Pulse to choose a song"
-        PulseWidgetProvider.updatePlaybackState(this, title, artist, player.isPlaying)
+        PulseWidgetProvider.updatePlaybackState(this, title, artist, player.isPlaying, player.mediaMetadata.artworkUri, player.currentMediaItem?.mediaId)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
