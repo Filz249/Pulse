@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 class PulseWidgetActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
-        if (action != PulseWidgetProvider.ACTION_PLAY_PAUSE && action != PulseWidgetProvider.ACTION_NEXT) return
+        if (action == PulseWidgetProvider.ACTION_FAVORITE) { PulseWidgetProvider.toggleFavorite(context); return }
+        if (action != PulseWidgetProvider.ACTION_PLAY_PAUSE && action != PulseWidgetProvider.ACTION_NEXT && action != PulseWidgetProvider.ACTION_PREVIOUS) return
 
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
@@ -30,6 +31,7 @@ class PulseWidgetActionReceiver : BroadcastReceiver() {
                         if (controller.isPlaying) controller.pause() else controller.play()
                     }
                     PulseWidgetProvider.ACTION_NEXT -> controller.seekToNextMediaItem()
+                    PulseWidgetProvider.ACTION_PREVIOUS -> controller.seekToPreviousMediaItem()
                 }
             } catch (_: Exception) {
                 // The widget stays usable when the playback service is not available yet.
