@@ -49,9 +49,15 @@ fun PlayerScreen(
                     }
                 },
                 actions = {
+                    var menuExpanded by remember { mutableStateOf(false) }
                     song?.let { currentSong ->
-                        IconButton(onClick = { onEditSongTags(currentSong) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit song information")
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                            }
+                            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                                DropdownMenuItem(text = { Text("Edit song information") }, leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }, onClick = { menuExpanded = false; onEditSongTags(currentSong) })
+                            }
                         }
                     }
                 }
