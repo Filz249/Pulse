@@ -57,6 +57,13 @@ class HomeViewModel @Inject constructor(
         ids.mapNotNull { id -> all.find { it.id == id } }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val _recentPlaylistIds = MutableStateFlow(
+        preferences.getString("recently_played_playlist_ids", "").orEmpty().split(",").mapNotNull { it.toLongOrNull() }
+    )
+    val recentlyPlayedPlaylists: StateFlow<List<Playlist>> = combine(playlists, _recentPlaylistIds) { all, ids ->
+        ids.mapNotNull { id -> all.find { it.id == id } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         viewModelScope.launch {
             playerConnection.currentSong.collect { song ->
@@ -86,6 +93,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { playlistRepository.addSongToPlaylist(playlistId, song.id) }
     }
     fun playPlaylist(playlistId: Long) {
+        val ids = (listOf(playlistId) + _recentPlaylistIds.value.filterNot { it == playlistId }).take(8)
+        _recentPlaylistIds.value = ids
+        preferences.edit().putString("recently_played_playlist_ids", ids.joinToString(",")).apply()
         viewModelScope.launch {
             val tracks = playlistRepository.getSongsForPlaylist(playlistId)
             if (tracks.isNotEmpty()) playerConnection.playSongs(tracks)
