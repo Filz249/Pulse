@@ -114,7 +114,8 @@ class MainActivity : ComponentActivity() {
                                 selectedPalette = selectedPalette,
                                 onPaletteSelected = { palette ->
                                     selectedPalette = palette
-                                    themePreferences.edit().putString("palette", palette.key).apply()
+                                    customAccent = null
+                                    themePreferences.edit().putString("palette", palette.key).remove("custom_accent_hex").apply()
                                     PulseWidgetProvider.refreshAll(context)
                                 },
                                 customHex = customHex,
