@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,6 +82,14 @@ fun HomeScreen(
     val artists = remember(librarySongs) { librarySongs.groupBy { it.artist }.values.filter { it.isNotEmpty() }.sortedBy { it.first().artist.lowercase() } }
 
     LaunchedEffect(permissionState.status.isGranted) { if (permissionState.status.isGranted) viewModel.refresh() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshFavorites()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(selectedBottomTab) {
         viewModel.refreshFavorites()
         if (selectedBottomTab != HomeNavigationTab.SEARCH) viewModel.onSearchQueryChanged("")
