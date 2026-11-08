@@ -7,6 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.RemoteViews
 import com.pulse.music.R
@@ -71,8 +73,21 @@ class PulseWidgetProvider : AppWidgetProvider() {
             val accent = accentFor(context)
             views.setTextViewText(R.id.widget_title, title)
             views.setTextViewText(R.id.widget_artist, artist)
-            if (artworkUri.isNullOrBlank()) views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_pulse_equalizer)
-            else views.setImageViewUri(R.id.widget_artwork, Uri.parse(artworkUri))
+            val artworkBitmap = artworkUri?.let { uri ->
+                runCatching {
+                    context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
+                        val options = BitmapFactory.Options().apply { inSampleSize = 2 }
+                        BitmapFactory.decodeStream(stream, null, options)
+                    }
+                }.getOrNull()
+            }
+            if (artworkBitmap == null) {
+                views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_pulse_equalizer)
+            } else {
+                val scaled = Bitmap.createScaledBitmap(artworkBitmap, 256, 256, true)
+                if (scaled !== artworkBitmap) artworkBitmap.recycle()
+                views.setImageViewBitmap(R.id.widget_artwork, scaled)
+            }
             views.setImageViewResource(R.id.widget_favorite, R.drawable.widget_ic_heart)
             views.setInt(R.id.widget_favorite, "setColorFilter", if (isFavorite) accent else Color.WHITE)
             views.setImageViewResource(R.id.widget_previous, android.R.drawable.ic_media_previous)
