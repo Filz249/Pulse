@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Settings : Screen("settings")
+    object Equalizer : Screen("equalizer")
     object Player : Screen("player")
     object Album : Screen("album/{albumId}") { fun createRoute(albumId: Long) = "album/$albumId" }
     object TagEditor : Screen("tag_editor/{filePath}/{contentUri}/{albumId}") {

@@ -36,7 +36,7 @@ fun MiniPlayer(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .padding(horizontal = 12.dp, vertical = 5.dp)
             .clip(shape)
             .clickable(onClick = onExpandClick),
         shape = shape,
@@ -48,7 +48,7 @@ fun MiniPlayer(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(horizontal = 10.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (song.albumArtUri != null) {
@@ -56,7 +56,7 @@ fun MiniPlayer(
                     model = song.albumArtUri,
                     contentDescription = "Cover",
                     modifier = Modifier
-                        .size(58.dp)
+                        .size(44.dp)
                         .clip(RoundedCornerShape(10.dp)),
                     contentScale = ContentScale.Crop
                 )
@@ -76,7 +76,7 @@ fun MiniPlayer(
                 }
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

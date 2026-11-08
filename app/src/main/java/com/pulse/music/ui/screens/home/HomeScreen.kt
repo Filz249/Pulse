@@ -19,11 +19,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -56,6 +55,7 @@ fun HomeScreen(
     onEditSongTags: (Song) -> Unit,
     onAlbumClick: (Long) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenMenu: () -> Unit,
     selectedBottomTab: HomeNavigationTab,
     onBottomTabChange: (HomeNavigationTab) -> Unit,
     modifier: Modifier = Modifier
@@ -142,26 +142,42 @@ fun HomeScreen(
             ) {
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        PulseMark(Modifier.size(42.dp)); Spacer(Modifier.width(11.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("PULSE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                            Text("YOUR MUSIC. YOUR WAY.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.3.sp)
+                        IconButton(onClick = onOpenMenu) {
+                            Icon(Icons.Default.Menu, contentDescription = "Open menu", tint = MaterialTheme.colorScheme.primary)
                         }
-                        IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        IconButton(onClick = { viewModel.refresh() }) { Icon(Icons.Default.Refresh, contentDescription = "Refresh library", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        Box {
-                            IconButton(onClick = { sortOpen = true }) { Icon(Icons.Default.Sort, contentDescription = "Sort music", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                            DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
-                                SortOrder.values().forEach { option -> DropdownMenuItem(text = { Text(option.displayName()) }, onClick = { viewModel.onSortOrderChanged(option); sortOpen = false }) }
-                            }
-                        }
+                        Text(
+                            when (selectedBottomTab) {
+                                HomeNavigationTab.HOME -> "Your library"
+                                HomeNavigationTab.SEARCH -> "Search"
+                                HomeNavigationTab.PLAYLISTS -> "Playlists"
+                                HomeNavigationTab.CREATE -> "Create playlist"
+                            },
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
                 if (selectedBottomTab == HomeNavigationTab.HOME) {
                     item {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             LibraryCategory.values().forEach { option ->
-                                FilterChip(selected = category == option, onClick = { category = option }, label = { Text(option.label) }, modifier = Modifier.weight(1f))
+                                FilterChip(
+                                    selected = category == option,
+                                    onClick = { category = option },
+                                    label = { Text(option.label) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (category == option) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                )
                             }
                         }
                     }
@@ -175,6 +191,29 @@ fun HomeScreen(
                             recentEntries.chunked(2).forEach { row ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     row.forEach { entry -> RecentGridCard(entry, Modifier.weight(1f)) }
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Box {
+                                TextButton(onClick = { sortOpen = true }) {
+                                    Icon(Icons.Default.Sort, contentDescription = null)
+                                    Spacer(Modifier.width(7.dp))
+                                    Text("Sort")
+                                }
+                                DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
+                                    SortOrder.values().forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option.displayName()) },
+                                            onClick = { viewModel.onSortOrderChanged(option); sortOpen = false }
+                                        )
+                                    }
                                 }
                             }
                         }
