@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.DateFormat
+import java.util.Date
 import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -67,6 +69,7 @@ fun HomeScreen(
     val recent by viewModel.recentlyPlayed.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
     val recentPlaylists by viewModel.recentlyPlayedPlaylists.collectAsState()
+    val recentPlayedAt by viewModel.recentPlayedAt.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
 
     var category by remember { mutableStateOf(LibraryCategory.SONGS) }
@@ -281,6 +284,10 @@ private fun RecentGridCard(entry: RecentGridEntry, modifier: Modifier = Modifier
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(entry.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(entry.subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                entry.song?.let { song ->
+                    val stamp = recentPlayedAt[song.id] ?: 0L
+                    Text(if (stamp > 0L) DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(stamp)) else "Recently played", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
     }
