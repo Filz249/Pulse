@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +35,7 @@ class PlayerConnection @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var mediaController: MediaController? = null
     private var currentPlaylist: List<Song> = emptyList()
+    private val connectMutex = Mutex()
 
     private val _currentSong = MutableStateFlow<Song?>(null)
     val currentSong: StateFlow<Song?> = _currentSong.asStateFlow()
@@ -52,17 +55,19 @@ class PlayerConnection @Inject constructor(
         }
     }
 
-    private suspend fun connect() {
+    private suspend fun connect() = connectMutex.withLock {
+        if (mediaController != null) return@withLock
         val sessionToken = SessionToken(
             context,
             ComponentName(context, AudioPlayerService::class.java)
         )
 
-        mediaController = MediaController.Builder(context, sessionToken)
+        val controller = MediaController.Builder(context, sessionToken)
             .buildAsync()
             .await()
+        mediaController = controller
 
-        mediaController?.addListener(object : Player.Listener {
+        controller.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.value = isPlaying
             }
@@ -80,6 +85,34 @@ class PlayerConnection @Inject constructor(
                 _repeatMode.value = mode
             }
         })
+    }
+
+    fun handleWidgetAction(action: String) {
+        scope.launch {
+            runCatching {
+                if (mediaController == null) connect()
+                val controller = mediaController ?: return@launch
+                when (action) {
+                    "PLAY_PAUSE" -> {
+                        if (controller.isPlaying || controller.playWhenReady) controller.pause() else controller.play()
+                    }
+                    "NEXT" -> if (controller.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) {
+                        controller.seekToNextMediaItem()
+                    }
+                    "PREVIOUS" -> if (controller.mediaItemCount > 0) {
+                        if (controller.currentPosition > 3_000L ||
+                            !controller.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                        ) {
+                            controller.seekTo(0L)
+                        } else {
+                            controller.seekToPreviousMediaItem()
+                        }
+                    }
+                }
+            }.onFailure { error ->
+                android.util.Log.e("PulseWidgetAction", "Unable to route widget action: $action", error)
+            }
+        }
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
