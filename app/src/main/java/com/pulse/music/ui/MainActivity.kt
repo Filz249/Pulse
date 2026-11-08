@@ -37,7 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
@@ -419,29 +419,38 @@ private fun PulseDrawerContent(
                 Spacer(Modifier.width(10.dp))
                 Text("App themes", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
-            var colorMode by remember { mutableStateOf("wheel") }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = colorMode == "wheel", onClick = { colorMode = "wheel" }, label = { Text("Color wheel") })
-                FilterChip(selected = colorMode == "hex", onClick = { colorMode = "hex" }, label = { Text("HEX") })
+            var advancedExpanded by rememberSaveable { mutableStateOf(false) }
+            var colorMode by rememberSaveable { mutableStateOf("wheel") }
+            TextButton(
+                onClick = { advancedExpanded = !advancedExpanded },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
+            ) {
+                Text(if (advancedExpanded) "Hide advanced color options" else "Advanced color options")
             }
-            if (colorMode == "wheel") {
-                PulseColorWheel(
-                    modifier = Modifier.fillMaxWidth().height(210.dp).padding(horizontal = 38.dp),
-                    onColorSelected = onWheelColorSelected
-                )
-                Text(customHex, modifier = Modifier.align(Alignment.CenterHorizontally), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
-            } else {
-            OutlinedTextField(
-                value = customHex,
-                onValueChange = onCustomHexChange,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                label = { Text("Custom accent (HEX)") },
-                placeholder = { Text("#FFB347") },
-                singleLine = true
-            )
-            Button(onClick = onApplyCustomAccent, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                Text("Apply custom color")
-            }
+            if (advancedExpanded) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = colorMode == "wheel", onClick = { colorMode = "wheel" }, label = { Text("Color wheel") })
+                    FilterChip(selected = colorMode == "hex", onClick = { colorMode = "hex" }, label = { Text("HEX") })
+                }
+                if (colorMode == "wheel") {
+                    PulseColorWheel(
+                        modifier = Modifier.fillMaxWidth().height(210.dp).padding(horizontal = 38.dp),
+                        onColorSelected = onWheelColorSelected
+                    )
+                    Text(customHex, modifier = Modifier.align(Alignment.CenterHorizontally), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+                } else {
+                    OutlinedTextField(
+                        value = customHex,
+                        onValueChange = onCustomHexChange,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        label = { Text("Custom accent (HEX)") },
+                        placeholder = { Text("#FFB347") },
+                        singleLine = true
+                    )
+                    Button(onClick = onApplyCustomAccent, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        Text("Apply custom color")
+                    }
+                }
             }
             PulsePalette.values().forEach { palette ->
                 NavigationDrawerItem(
@@ -510,18 +519,25 @@ private fun PulseColorWheel(modifier: Modifier = Modifier, onColorSelected: (Col
     }
     Canvas(
         modifier = modifier.pointerInput(onColorSelected) {
-            detectTapGestures { tap ->
+            fun emitColor(position: Offset) {
                 val center = Offset(size.width / 2f, size.height / 2f)
-                val dx = tap.x - center.x
-                val dy = tap.y - center.y
+                val dx = position.x - center.x
+                val dy = position.y - center.y
                 val radius = minOf(size.width, size.height) / 2f
                 val distance = kotlin.math.sqrt(dx * dx + dy * dy)
-                if (distance <= radius) {
+                if (radius > 0f && distance <= radius) {
                     val hue = ((Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())) + 360.0) % 360.0).toFloat()
                     val saturation = (distance / radius).coerceIn(0f, 1f)
                     onColorSelected(Color(AndroidColor.HSVToColor(floatArrayOf(hue, saturation, 1f))))
                 }
             }
+            detectDragGestures(
+                onDragStart = { position -> emitColor(position) },
+                onDrag = { change, _ ->
+                    change.consume()
+                    emitColor(change.position)
+                }
+            )
         }
     ) {
         val diameter = minOf(size.width, size.height).toInt()
