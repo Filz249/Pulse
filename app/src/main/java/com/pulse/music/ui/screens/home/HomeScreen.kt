@@ -164,7 +164,7 @@ fun HomeScreen(
                                 FilterChip(
                                     selected = category == option,
                                     onClick = { category = option },
-                                    label = { Text(option.label) },
+                                    label = { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Text(option.label) } },
                                     modifier = Modifier.weight(1f),
                                     colors = FilterChipDefaults.filterChipColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -199,8 +199,9 @@ fun HomeScreen(
                         Row(
                             Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+                            Text("Songs", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                             Box {
                                 TextButton(onClick = { sortOpen = true }) {
                                     Icon(Icons.Default.Sort, contentDescription = null)
@@ -220,7 +221,7 @@ fun HomeScreen(
                     }
                     when (category) {
                         LibraryCategory.SONGS -> {
-                            item { SectionHeading("Songs", "Your local collection") }
+                            item { Text("Your local collection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                             if (songs.isEmpty()) item { EmptyHint("Songs appear here when audio is added to your library.") }
                             itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
                                 LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
