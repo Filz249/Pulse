@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -94,7 +96,7 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(PulsePalette.fromKey(themePreferences.getString("palette", null)))
             }
             var customHex by rememberSaveable { mutableStateOf(themePreferences.getString("custom_accent_hex", "#FFB347") ?: "#FFB347") }
-            var customAccent by remember { mutableStateOf(runCatching { Color(android.graphics.Color.parseColor(customHex)) }.getOrNull()) }
+            var customAccent by remember { mutableStateOf(themePreferences.getString("custom_accent_hex", null)?.let { hex -> runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull() }) }
             var showBrandSplash by rememberSaveable { mutableStateOf(true) }
             LaunchedEffect(Unit) {
                 delay(850)
