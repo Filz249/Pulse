@@ -5,19 +5,19 @@ import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -27,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,9 +40,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.pulse.music.domain.model.Playlist
 import com.pulse.music.domain.model.Song
 
-private enum class LibraryCategory(val label: String) {
-    OVERVIEW("Overview"), SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists"), PLAYLISTS("Playlists")
-}
+enum class HomeNavigationTab { HOME, SEARCH, PLAYLISTS, CREATE }
+private enum class LibraryCategory(val label: String) { SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists") }
+private data class RecentGridEntry(val title: String, val subtitle: String, val song: Song?, val icon: ImageVector, val onClick: () -> Unit)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -51,201 +52,194 @@ fun HomeScreen(
     onEditSongTags: (Song) -> Unit,
     onAlbumClick: (Long) -> Unit,
     onOpenSettings: () -> Unit,
+    selectedBottomTab: HomeNavigationTab,
+    onBottomTabChange: (HomeNavigationTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-        Manifest.permission.READ_MEDIA_AUDIO else Manifest.permission.READ_EXTERNAL_STORAGE
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_AUDIO else Manifest.permission.READ_EXTERNAL_STORAGE
     val permissionState = rememberPermissionState(permission)
     val librarySongs by viewModel.librarySongs.collectAsState()
     val songs by viewModel.songs.collectAsState()
     val recent by viewModel.recentlyPlayed.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val recentPlaylists by viewModel.recentlyPlayedPlaylists.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
 
-    var category by remember { mutableStateOf(LibraryCategory.OVERVIEW) }
+    var category by remember { mutableStateOf(LibraryCategory.SONGS) }
     var sortOpen by remember { mutableStateOf(false) }
     var createOpen by remember { mutableStateOf(false) }
     var songForNewPlaylist by remember { mutableStateOf<Song?>(null) }
-
     val albums = remember(librarySongs) { librarySongs.groupBy { it.albumId }.values.filter { it.isNotEmpty() }.sortedBy { it.first().album.lowercase() } }
     val artists = remember(librarySongs) { librarySongs.groupBy { it.artist }.values.filter { it.isNotEmpty() }.sortedBy { it.first().artist.lowercase() } }
 
-    LaunchedEffect(permissionState.status.isGranted) {
-        if (permissionState.status.isGranted) viewModel.refresh()
+    LaunchedEffect(permissionState.status.isGranted) { if (permissionState.status.isGranted) viewModel.refresh() }
+    LaunchedEffect(selectedBottomTab) {
+        if (selectedBottomTab == HomeNavigationTab.CREATE) {
+            songForNewPlaylist = null
+            createOpen = true
+            onBottomTabChange(HomeNavigationTab.HOME)
+        }
     }
     if (createOpen) {
         NewPlaylistDialog(
             initialSong = songForNewPlaylist,
             onDismiss = { createOpen = false; songForNewPlaylist = null },
-            onCreate = { name, song ->
-                viewModel.createPlaylist(name, song)
-                createOpen = false
-                songForNewPlaylist = null
-            }
+            onCreate = { name, song -> viewModel.createPlaylist(name, song); createOpen = false; songForNewPlaylist = null }
         )
+    }
+
+    val historySongs = recent.ifEmpty { librarySongs }
+    val recentArtistGroups = historySongs.distinctBy { it.artist }.take(2)
+    val recentAlbumGroups = historySongs.distinctBy { it.albumId }.take(2)
+    val historyPlaylists = recentPlaylists.ifEmpty { playlists }.take(2)
+    val recentEntries = buildList {
+        repeat(2) { index ->
+            val song = historySongs.getOrNull(index)
+            add(RecentGridEntry(song?.title ?: "No recent song", if (recent.isEmpty()) "Songs · Your library" else "Recently played song", song, Icons.Default.MusicNote) {
+                song?.let { selected -> val position = librarySongs.indexOfFirst { it.id == selected.id }; if (position >= 0) onSongClick(librarySongs, position) }
+            })
+        }
+        repeat(2) { index ->
+            val song = recentArtistGroups.getOrNull(index)
+            add(RecentGridEntry(song?.artist ?: "No recent artist", "Artist", song, Icons.Default.Person) {
+                song?.let { selected -> val tracks = librarySongs.filter { it.artist == selected.artist }; if (tracks.isNotEmpty()) onSongClick(tracks, 0) }
+            })
+        }
+        repeat(2) { index ->
+            val song = recentAlbumGroups.getOrNull(index)
+            add(RecentGridEntry(song?.album ?: "No recent album", "Album", song, Icons.Default.Album) { song?.let { onAlbumClick(it.albumId) } })
+        }
+        repeat(2) { index ->
+            val playlist = historyPlaylists.getOrNull(index)
+            add(RecentGridEntry(playlist?.name ?: if (index == 0) "Create a playlist" else "No recent playlist", "Playlist", null, Icons.Default.GraphicEq) {
+                if (playlist != null) viewModel.playPlaylist(playlist.id) else { songForNewPlaylist = null; createOpen = true }
+            })
+        }
     }
 
     Scaffold(modifier = modifier, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         if (!permissionState.status.isGranted) {
             Box(Modifier.fillMaxSize().padding(padding).padding(24.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    PulseMark(Modifier.size(76.dp))
-                    Spacer(Modifier.height(20.dp))
+                    PulseMark(Modifier.size(76.dp)); Spacer(Modifier.height(20.dp))
                     Text("Your music starts here", style = MaterialTheme.typography.headlineSmall)
                     Spacer(Modifier.height(8.dp))
-                    Text("Allow Pulse to scan audio stored on this device. Your library stays on your phone.",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(20.dp))
-                    Button(onClick = { permissionState.launchPermissionRequest() }) { Text("Allow audio access") }
+                    Text("Allow Pulse to scan audio stored on this device. Your library stays on your phone.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(20.dp)); Button(onClick = { permissionState.launchPermissionRequest() }) { Text("Allow audio access") }
                     TextButton(onClick = onOpenSettings) { Text("Settings") }
                 }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        PulseMark(Modifier.size(44.dp))
-                        Spacer(Modifier.width(11.dp))
+                        PulseMark(Modifier.size(42.dp)); Spacer(Modifier.width(11.dp))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("PULSE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                             Text("YOUR MUSIC. YOUR WAY.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.3.sp)
                         }
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        IconButton(onClick = { viewModel.refresh() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh library", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        IconButton(onClick = { viewModel.refresh() }) { Icon(Icons.Default.Refresh, contentDescription = "Refresh library", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                         Box {
-                            IconButton(onClick = { sortOpen = true }) {
-                                Icon(Icons.Default.Sort, contentDescription = "Sort music", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                            IconButton(onClick = { sortOpen = true }) { Icon(Icons.Default.Sort, contentDescription = "Sort music", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                             DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
-                                SortOrder.values().forEach { option ->
-                                    DropdownMenuItem(text = { Text(option.displayName()) }, onClick = {
-                                        viewModel.onSortOrderChanged(option); sortOpen = false
-                                    })
-                                }
+                                SortOrder.values().forEach { option -> DropdownMenuItem(text = { Text(option.displayName()) }, onClick = { viewModel.onSortOrderChanged(option); sortOpen = false }) }
                             }
                         }
                     }
                 }
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Your music, your space.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                        Text("A home for the albums, artists and tracks already on your device.",
-                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                item {
-                    OutlinedTextField(
-                        value = query, onValueChange = viewModel::onSearchQueryChanged,
-                        modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search your library") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        singleLine = true, shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    )
-                }
-
-                if (query.isBlank()) {
-                    if (category == LibraryCategory.OVERVIEW || category == LibraryCategory.SONGS) {
-                        item {
-                            SectionHeading("Recently played", "Pick up where you left off")
-                            if (recent.isEmpty()) EmptyHint("Tracks you play will appear here.")
-                            else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                recent.take(10).forEach { song ->
-                                    CoverCard(song) {
-                                        val index = librarySongs.indexOfFirst { it.id == song.id }
-                                        if (index >= 0) onSongClick(librarySongs, index)
-                                    }
-                                }
+                if (selectedBottomTab == HomeNavigationTab.HOME) {
+                    item {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            LibraryCategory.values().forEach { option ->
+                                FilterChip(selected = category == option, onClick = { category = option }, label = { Text(option.label) }, modifier = Modifier.weight(1f))
                             }
                         }
                     }
                     item {
-                        SectionHeading("Your library", "Browse by the way you listen")
-                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            LibraryCategory.values().forEach { option ->
-                                FilterChip(selected = category == option, onClick = { category = option }, label = { Text(option.label) })
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text("Recently played", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.weight(1f))
+                                Text("Your listening", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            recentEntries.chunked(2).forEach { row ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    row.forEach { entry -> RecentGridCard(entry, Modifier.weight(1f)) }
+                                }
                             }
                         }
                     }
-                } else item { SectionHeading("Search results", "${songs.size} matches in your library") }
-
-                when (category) {
-                    LibraryCategory.OVERVIEW -> {
-                        if (query.isNotBlank()) {
-                            if (songs.isEmpty()) item { EmptyHint("No matches found. Try another search.") }
+                    when (category) {
+                        LibraryCategory.SONGS -> {
+                            item { SectionHeading("Songs", "Your local collection") }
+                            if (songs.isEmpty()) item { EmptyHint("Songs appear here when audio is added to your library.") }
                             itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                                LibrarySongRow(song, playlists,
-                                    { onSongClick(songs, index) }, { onEditSongTags(song) },
-                                    { track, id -> viewModel.addSongToPlaylist(track, id) },
-                                    { songForNewPlaylist = song; createOpen = true })
-                            }
-                        } else {
-                            if (albums.isNotEmpty()) item {
-                                SectionHeading("Albums", "Albums in your collection")
-                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                    albums.take(12).forEach { group -> SquareCard(group.first(), group.first().album) { onAlbumClick(group.first().albumId) } }
-                                }
-                            }
-                            if (artists.isNotEmpty()) item {
-                                SectionHeading("Artists", "The people behind the music")
-                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                    artists.take(12).forEach { group -> CircleCard(group.first(), group.first().artist, "${group.size} tracks") { onSongClick(group, 0) } }
-                                }
-                            }
-                            item {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    SectionHeading("All songs", "Your complete local collection", Modifier.weight(1f))
-                                    TextButton(onClick = { category = LibraryCategory.SONGS }) { Text("See all") }
-                                }
-                            }
-                            itemsIndexed(songs.take(8), key = { _, song -> song.id }) { index, song ->
-                                LibrarySongRow(song, playlists,
-                                    { onSongClick(songs, index) }, { onEditSongTags(song) },
-                                    { track, id -> viewModel.addSongToPlaylist(track, id) },
-                                    { songForNewPlaylist = song; createOpen = true })
-                            }
-                            item {
-                                SectionHeading("Playlists", "Collections you create")
-                                PlaylistSection(playlists, { viewModel.playPlaylist(it) }, { createOpen = true })
+                                LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
                             }
                         }
-                    }
-                    LibraryCategory.SONGS -> {
-                        if (songs.isEmpty()) item { EmptyHint("No songs match your search.") }
-                        itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                            LibrarySongRow(song, playlists,
-                                { onSongClick(songs, index) }, { onEditSongTags(song) },
-                                { track, id -> viewModel.addSongToPlaylist(track, id) },
-                                { songForNewPlaylist = song; createOpen = true })
+                        LibraryCategory.ALBUMS -> {
+                            item { SectionHeading("Albums", "Browse your albums") }
+                            if (albums.isEmpty()) item { EmptyHint("Albums appear here when audio is added to your library.") }
+                            items(albums) { group -> CompactLibraryRow(group.first(), group.first().album, "${group.size} tracks") { onAlbumClick(group.first().albumId) } }
+                        }
+                        LibraryCategory.ARTISTS -> {
+                            item { SectionHeading("Artists", "Browse by artist") }
+                            if (artists.isEmpty()) item { EmptyHint("Artists appear here when audio is added to your library.") }
+                            items(artists) { group -> CompactLibraryRow(group.first(), group.first().artist, "${group.size} tracks · ${group.map { it.albumId }.distinct().size} albums", true) { onSongClick(group, 0) } }
                         }
                     }
-                    LibraryCategory.ALBUMS -> {
-                        if (albums.isEmpty()) item { EmptyHint("Albums appear here when audio is added to your library.") }
-                        items(albums) { group -> CompactLibraryRow(group.first(), group.first().album, "${group.size} tracks") { onAlbumClick(group.first().albumId) } }
+                } else if (selectedBottomTab == HomeNavigationTab.SEARCH) {
+                    item {
+                        OutlinedTextField(
+                            value = query, onValueChange = viewModel::onSearchQueryChanged, modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Search songs, albums or artists") }, leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            singleLine = true, shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant)
+                        )
                     }
-                    LibraryCategory.ARTISTS -> {
-                        if (artists.isEmpty()) item { EmptyHint("Artists appear here when audio is added to your library.") }
-                        items(artists) { group -> CompactLibraryRow(group.first(), group.first().artist, "${group.size} tracks · ${group.map { it.albumId }.distinct().size} albums", true) { onSongClick(group, 0) } }
+                    item { SectionHeading("Search results", "${songs.size} matches in your library") }
+                    if (songs.isEmpty()) item { EmptyHint(if (query.isBlank()) "Search your local music library." else "No matches found. Try another search.") }
+                    itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                        LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
                     }
-                    LibraryCategory.PLAYLISTS -> {
-                        item { PlaylistSection(playlists, { viewModel.playPlaylist(it) }, { createOpen = true }, true) }
-                    }
+                } else if (selectedBottomTab == HomeNavigationTab.PLAYLISTS) {
+                    item { SectionHeading("Playlists", "Your personal collections") }
+                    item { PlaylistSection(playlists, { viewModel.playPlaylist(it) }, { createOpen = true }, true) }
                 }
             }
         }
     }
 }
 
+@Composable
+private fun RecentGridCard(entry: RecentGridEntry, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.height(70.dp).clickable(onClick = entry.onClick),
+        shape = RoundedCornerShape(13.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+    ) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 9.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (entry.song?.albumArtUri != null) {
+                AsyncImage(entry.song.albumArtUri, contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(9.dp)), contentScale = ContentScale.Crop)
+            } else {
+                Box(Modifier.size(48.dp).clip(RoundedCornerShape(9.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)), contentAlignment = Alignment.Center) {
+                    Icon(entry.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(Modifier.width(9.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(entry.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(entry.subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
 private fun SortOrder.displayName() = when (this) {
     SortOrder.TITLE -> "Title"
     SortOrder.ARTIST -> "Artist"
