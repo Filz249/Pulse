@@ -70,6 +70,7 @@ fun HomeScreen(
     val playlists by viewModel.playlists.collectAsState()
     val recentPlaylists by viewModel.recentlyPlayedPlaylists.collectAsState()
     val recentPlayedAt by viewModel.recentPlayedAt.collectAsState()
+    val playCounts by viewModel.playCounts.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
 
     var category by remember { mutableStateOf(LibraryCategory.SONGS) }
@@ -219,6 +220,19 @@ fun HomeScreen(
                                         )
                                     }
                                 }
+                            }
+                        }
+                    }
+                    item {
+                        val topSong = librarySongs.maxByOrNull { playCounts[it.id] ?: 0 }?.takeIf { (playCounts[it.id] ?: 0) > 0 }
+                        val topArtist = librarySongs.groupBy { it.artist }.maxByOrNull { entry -> entry.value.sumOf { playCounts[it.id] ?: 0 } }?.key
+                        val topAlbum = librarySongs.groupBy { it.albumId }.maxByOrNull { entry -> entry.value.sumOf { playCounts[it.id] ?: 0 } }?.value?.firstOrNull()?.album
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Your listening stats", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ListeningStatCard("Top song", topSong?.title ?: "No data yet", Modifier.weight(1f))
+                                ListeningStatCard("Top artist", topArtist ?: "No data yet", Modifier.weight(1f))
+                                ListeningStatCard("Top album", topAlbum ?: "No data yet", Modifier.weight(1f))
                             }
                         }
                     }
@@ -448,4 +462,14 @@ private fun NewPlaylistDialog(initialSong: Song?, onDismiss: () -> Unit, onCreat
         confirmButton = { Button(onClick = { onCreate(name, initialSong) }, enabled = name.isNotBlank()) { Text("Create") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+@Composable
+private fun ListeningStatCard(title: String, value: String, modifier: Modifier = Modifier) {
+    Surface(modifier, shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
 }
