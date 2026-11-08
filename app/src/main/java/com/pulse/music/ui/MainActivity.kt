@@ -1,6 +1,8 @@
 package com.pulse.music.ui
 
 import android.appwidget.AppWidgetManager
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import android.content.ComponentName
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +12,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -32,6 +36,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -45,6 +54,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.pulse.music.domain.model.Song
 import com.pulse.music.BuildConfig
 import com.pulse.music.R
 import com.pulse.music.ui.components.MiniPlayer
@@ -102,6 +112,9 @@ class MainActivity : ComponentActivity() {
                     var selectedHomeTab by rememberSaveable { mutableStateOf(HomeNavigationTab.HOME) }
                     val isHomeDestination = currentEntry?.destination?.route == Screen.Home.route
                     val homeViewModel: HomeViewModel = hiltViewModel()
+                    val statsSongs by homeViewModel.librarySongs.collectAsState()
+                    val statsPlaylists by homeViewModel.playlists.collectAsState()
+                    val statsPlayCounts by homeViewModel.playCounts.collectAsState()
                     val currentSong by homeViewModel.playerConnection.currentSong.collectAsState()
                     val isPlaying by homeViewModel.playerConnection.isPlaying.collectAsState()
                     val showMiniPlayer = currentSong != null && isHomeDestination
@@ -118,6 +131,9 @@ class MainActivity : ComponentActivity() {
                                     themePreferences.edit().putString("palette", palette.key).remove("custom_accent_hex").apply()
                                     PulseWidgetProvider.refreshAll(context)
                                 },
+                                statsSongs = statsSongs,
+                                statsPlaylistCount = statsPlaylists.size,
+                                statsPlayCounts = statsPlayCounts,
                                 customHex = customHex,
                                 onCustomHexChange = { customHex = it },
                                 onApplyCustomAccent = {
@@ -128,6 +144,12 @@ class MainActivity : ComponentActivity() {
                                         themePreferences.edit().putString("custom_accent_hex", value).apply()
                                         PulseWidgetProvider.refreshAll(context)
                                     }
+                                },
+                                onWheelColorSelected = { color ->
+                                    customAccent = color
+                                    customHex = "#%06X".format(color.toArgb() and 0xFFFFFF)
+                                    themePreferences.edit().putString("custom_accent_hex", customHex).apply()
+                                    PulseWidgetProvider.refreshAll(context)
                                 },
                                 onEqualizer = {
                                     scope.launch {
@@ -308,7 +330,7 @@ private fun BrandSplashScreen() {
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(78.dp)
             )
-            Text("PULSE", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
+            Text("PULSE", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, letterSpacing = 4.sp, color = MaterialTheme.colorScheme.primary)
             Text(
                 "YOUR MUSIC. YOUR WAY.",
                 style = MaterialTheme.typography.labelMedium,
@@ -328,7 +350,11 @@ private fun PulseDrawerContent(
     onAddWidget: () -> Unit,
     customHex: String,
     onCustomHexChange: (String) -> Unit,
-    onApplyCustomAccent: () -> Unit
+    onApplyCustomAccent: () -> Unit,
+    onWheelColorSelected: (Color) -> Unit,
+    statsSongs: List<Song>,
+    statsPlaylistCount: Int,
+    statsPlayCounts: Map<Long, Int>
 ) {
     ModalDrawerSheet(
         drawerContainerColor = MaterialTheme.colorScheme.surface,
@@ -375,6 +401,12 @@ private fun PulseDrawerContent(
                 onClick = onSettings,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
+            DrawerListeningStats(
+                songs = statsSongs,
+                playlistCount = statsPlaylistCount,
+                playCounts = statsPlayCounts,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp)
+            )
             HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 8.dp),
@@ -384,6 +416,18 @@ private fun PulseDrawerContent(
                 Spacer(Modifier.width(10.dp))
                 Text("App themes", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
+            var colorMode by remember { mutableStateOf("wheel") }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = colorMode == "wheel", onClick = { colorMode = "wheel" }, label = { Text("Color wheel") })
+                FilterChip(selected = colorMode == "hex", onClick = { colorMode = "hex" }, label = { Text("HEX") })
+            }
+            if (colorMode == "wheel") {
+                PulseColorWheel(
+                    modifier = Modifier.fillMaxWidth().height(210.dp).padding(horizontal = 38.dp),
+                    onColorSelected = onWheelColorSelected
+                )
+                Text(customHex, modifier = Modifier.align(Alignment.CenterHorizontally), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+            } else {
             OutlinedTextField(
                 value = customHex,
                 onValueChange = onCustomHexChange,
@@ -394,6 +438,7 @@ private fun PulseDrawerContent(
             )
             Button(onClick = onApplyCustomAccent, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text("Apply custom color")
+            }
             }
             PulsePalette.values().forEach { palette ->
                 NavigationDrawerItem(
@@ -433,5 +478,129 @@ private fun PulseDrawerContent(
                 )
             }
         }
+    }
+}
+
+
+@Composable
+private fun PulseColorWheel(modifier: Modifier = Modifier, onColorSelected: (Color) -> Unit) {
+    val wheel = remember {
+        val size = 256
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(size * size)
+        val center = (size - 1) / 2f
+        val radius = center
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val dx = x - center
+                val dy = y - center
+                val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+                pixels[y * size + x] = if (distance <= radius) {
+                    val hue = ((Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())) + 360.0) % 360.0).toFloat()
+                    val saturation = (distance / radius).coerceIn(0f, 1f)
+                    AndroidColor.HSVToColor(floatArrayOf(hue, saturation, 1f))
+                } else AndroidColor.TRANSPARENT
+            }
+        }
+        bitmap.setPixels(pixels, 0, size, 0, 0, size, size)
+        bitmap.asImageBitmap()
+    }
+    Canvas(
+        modifier = modifier.pointerInput(onColorSelected) {
+            detectTapGestures { tap ->
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val dx = tap.x - center.x
+                val dy = tap.y - center.y
+                val radius = minOf(size.width, size.height) / 2f
+                val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+                if (distance <= radius) {
+                    val hue = ((Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())) + 360.0) % 360.0).toFloat()
+                    val saturation = (distance / radius).coerceIn(0f, 1f)
+                    onColorSelected(Color(AndroidColor.HSVToColor(floatArrayOf(hue, saturation, 1f))))
+                }
+            }
+        }
+    ) {
+        val diameter = minOf(size.width, size.height).toInt()
+        drawImage(wheel, dstSize = IntSize(diameter, diameter), dstOffset = androidx.compose.ui.unit.IntOffset(
+            ((size.width - diameter) / 2f).toInt(), ((size.height - diameter) / 2f).toInt()
+        ))
+        drawCircle(
+            color = Color.White.copy(alpha = 0.9f),
+            radius = diameter / 2f - 1.dp.toPx(),
+            style = Stroke(width = 2.dp.toPx())
+        )
+    }
+}
+
+@Composable
+private fun DrawerListeningStats(
+    songs: List<Song>,
+    playlistCount: Int,
+    playCounts: Map<Long, Int>,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val totalPlays = playCounts.values.sum()
+    val playedSongs = songs.filter { (playCounts[it.id] ?: 0) > 0 }
+    val topSongs = playedSongs.sortedByDescending { playCounts[it.id] ?: 0 }.take(5)
+    val topArtists = songs.groupBy { it.artist }
+        .mapValues { (_, tracks) -> tracks.sumOf { playCounts[it.id] ?: 0 } }
+        .filterValues { it > 0 }
+        .toList().sortedByDescending { it.second }.take(3)
+    val topAlbums = songs.groupBy { it.albumId }
+        .mapValues { (_, tracks) -> tracks.sumOf { playCounts[it.id] ?: 0 } to (tracks.firstOrNull()?.album ?: "Unknown album") }
+        .filterValues { it.first > 0 }
+        .values.sortedByDescending { it.first }.take(3)
+
+    Card(
+        modifier = modifier.clickable { expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Text("Listening statistics", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(if (expanded) "Less" else "Details", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                StatValue("Plays", totalPlays.toString())
+                StatValue("Tracks played", playedSongs.size.toString())
+                StatValue("Playlists", playlistCount.toString())
+            }
+            if (expanded) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Text("Most played songs", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                if (topSongs.isEmpty()) Text("Your play history will build as you listen.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                topSongs.forEachIndexed { index, song ->
+                    StatRankRow("${index + 1}. ${song.title}", "${song.artist} · ${playCounts[song.id] ?: 0} plays")
+                }
+                Text("Top artists", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                topArtists.forEachIndexed { index, entry -> StatRankRow("${index + 1}. ${entry.first}", "${entry.second} plays") }
+                Text("Top albums", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                topAlbums.forEachIndexed { index, entry -> StatRankRow("${index + 1}. ${entry.second}", "${entry.first} plays") }
+                Text("Library: ${songs.size} tracks · ${songs.map { it.albumId }.distinct().size} albums · ${songs.map { it.artist }.distinct().size} artists",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatValue(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun StatRankRow(title: String, detail: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
+        Spacer(Modifier.width(8.dp))
+        Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }
