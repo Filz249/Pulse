@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        PulseWidgetProvider.refreshAll(applicationContext)
         lifecycleScope.launch { UpdateChecker.checkIfDue(applicationContext) }
 
         setContent {
