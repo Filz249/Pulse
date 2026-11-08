@@ -63,14 +63,14 @@ fun MiniPlayer(
             } else {
                 Surface(
                     modifier = Modifier
-                        .size(58.dp)
+                        .size(44.dp)
                         .clip(RoundedCornerShape(10.dp)),
                     color = MaterialTheme.colorScheme.surface
                 ) {
                     Icon(
                         imageVector = Icons.Default.MusicNote,
                         contentDescription = null,
-                        modifier = Modifier.padding(15.dp),
+                        modifier = Modifier.padding(10.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

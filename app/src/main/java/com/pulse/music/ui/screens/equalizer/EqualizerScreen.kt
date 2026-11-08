@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import com.pulse.music.player.AudioSessionState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,7 +120,7 @@ fun EqualizerScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                                     if (frequencyHz >= 1000) "${frequencyHz / 1000.0} kHz" else "${frequencyHz} Hz",
                                     style = MaterialTheme.typography.labelLarge
                                 )
-                                Text("${level.toInt()} dB/100", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(String.format(Locale.getDefault(), "%.1f dB", level / 100f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Slider(
                                 value = level,
