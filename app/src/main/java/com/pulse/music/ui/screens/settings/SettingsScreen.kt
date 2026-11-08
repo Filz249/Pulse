@@ -47,7 +47,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pulse.music.BuildConfig
-import com.pulse.music.ui.theme.PulseAmber
 import com.pulse.music.update.UpdateChecker
 import com.pulse.music.update.UpdateStatus
 import com.pulse.music.update.UpdateDownloadState
@@ -151,7 +150,7 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
             ) {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = PulseAmber)
+                        Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(9.dp))
                         Text("Software updates", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     }
@@ -244,7 +243,7 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
 
-            SettingsInfoCard(icon = { Icon(Icons.Default.Info, null, tint = PulseAmber) }, title = "About Pulse") {
+            SettingsInfoCard(icon = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary) }, title = "About Pulse") {
                 InfoLine("Version", BuildConfig.VERSION_NAME)
                 InfoLine("Build", BuildConfig.GIT_COMMIT.take(7).let {
                     if (it == "local") "Local development build" else it
@@ -253,7 +252,7 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                 InfoLine("Playback", "Local audio with background playback and system media controls")
             }
 
-            SettingsInfoCard(icon = { Icon(Icons.Default.Lock, null, tint = PulseAmber) }, title = "Privacy") {
+            SettingsInfoCard(icon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.primary) }, title = "Privacy") {
                 Text(
                     "Your music library, playlists and listening history are stored on this device. Pulse does not use advertising or analytics SDKs and does not require an account.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -267,7 +266,7 @@ fun SettingsScreen(onBackClick: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
 
-            SettingsInfoCard(icon = { Icon(Icons.Default.MusicNote, null, tint = PulseAmber) }, title = "Audio and permissions") {
+            SettingsInfoCard(icon = { Icon(Icons.Default.MusicNote, null, tint = MaterialTheme.colorScheme.primary) }, title = "Audio and permissions") {
                 Text(
                     "Pulse needs access to audio files on your device to build your library. Editing embedded tags may require Android to ask for write access to a selected audio file.",
                     style = MaterialTheme.typography.bodyMedium,

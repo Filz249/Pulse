@@ -32,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -113,6 +112,7 @@ class MainActivity : ComponentActivity() {
                                 onPaletteSelected = { palette ->
                                     selectedPalette = palette
                                     themePreferences.edit().putString("palette", palette.key).apply()
+                                    PulseWidgetProvider.refreshAll(context)
                                 },
                                 onEqualizer = {
                                     scope.launch {
@@ -287,10 +287,11 @@ private fun BrandSplashScreen() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Image(
-                painter = painterResource(R.drawable.ic_pulse_mark),
+            Icon(
+                painter = painterResource(R.drawable.ic_pulse_equalizer),
                 contentDescription = "Pulse",
-                modifier = Modifier.size(104.dp)
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(78.dp)
             )
             Text("PULSE", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
             Text(
@@ -323,10 +324,11 @@ private fun PulseDrawerContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_pulse_mark),
+                Icon(
+                    painter = painterResource(R.drawable.ic_pulse_equalizer),
                     contentDescription = "Pulse logo",
-                    modifier = Modifier.size(48.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(38.dp)
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("Pulse", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

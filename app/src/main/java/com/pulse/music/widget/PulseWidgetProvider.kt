@@ -24,6 +24,16 @@ class PulseWidgetProvider : AppWidgetProvider() {
         private const val KEY_ARTIST = "artist"
         private const val KEY_PLAYING = "playing"
 
+        fun refreshAll(context: Context) {
+            val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            updatePlaybackState(
+                context,
+                preferences.getString(KEY_TITLE, null) ?: "Nothing playing",
+                preferences.getString(KEY_ARTIST, null) ?: "Open Pulse to choose a song",
+                preferences.getBoolean(KEY_PLAYING, false)
+            )
+        }
+
         fun updatePlaybackState(context: Context, title: String, artist: String, isPlaying: Boolean) {
             context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit()
                 .putString(KEY_TITLE, title)
@@ -47,6 +57,17 @@ class PulseWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_pulse)
             views.setTextViewText(R.id.widget_title, title)
             views.setTextViewText(R.id.widget_artist, artist)
+            val accent = when (
+                context.getSharedPreferences("pulse_ui_preferences", Context.MODE_PRIVATE)
+                    .getString("palette", "amber")
+            ) {
+                "ocean" -> android.graphics.Color.rgb(105, 201, 194)
+                "violet" -> android.graphics.Color.rgb(183, 160, 255)
+                else -> android.graphics.Color.rgb(255, 179, 71)
+            }
+            views.setTextColor(R.id.widget_brand, accent)
+            views.setInt(R.id.widget_play_pause, "setColorFilter", accent)
+            views.setInt(R.id.widget_next, "setColorFilter", accent)
             views.setImageViewResource(
                 R.id.widget_play_pause,
                 if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
