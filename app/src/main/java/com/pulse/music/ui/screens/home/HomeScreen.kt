@@ -104,7 +104,7 @@ fun HomeScreen(
     val recentEntries = buildList {
         repeat(2) { index ->
             val song = historySongs.getOrNull(index)
-            add(RecentGridEntry(song?.title ?: "No recent song", if (recent.isEmpty()) "Songs · Your library" else "Recently played song", song, Icons.Default.MusicNote) {
+            add(RecentGridEntry(song?.title ?: "No recent song", song?.artist ?: "Songs · Your library", song, Icons.Default.MusicNote) {
                 song?.let { selected -> val position = librarySongs.indexOfFirst { it.id == selected.id }; if (position >= 0) onSongClick(librarySongs, position) }
             })
         }
