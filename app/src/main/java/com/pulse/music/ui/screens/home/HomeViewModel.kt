@@ -53,6 +53,21 @@ class HomeViewModel @Inject constructor(
     private val _recentIds = MutableStateFlow(
         preferences.getString("recently_played_ids", "").orEmpty().split(",").mapNotNull { it.toLongOrNull() }
     )
+
+    private val _recentPlayedAt = MutableStateFlow(
+        preferences.getString("recently_played_timestamps", "").orEmpty().split(",").mapNotNull { token ->
+            token.split(":").takeIf { it.size == 2 }?.let { parts -> parts[0].toLongOrNull()?.let { id -> id to (parts[1].toLongOrNull() ?: 0L) } }
+        }.toMap()
+    )
+    val recentPlayedAt: StateFlow<Map<Long, Long>> = _recentPlayedAt.asStateFlow()
+
+    private val _playCounts = MutableStateFlow(
+        preferences.getString("play_counts", "").orEmpty().split(",").mapNotNull { token ->
+            token.split(":").takeIf { it.size == 2 }?.let { parts -> parts[0].toLongOrNull()?.let { id -> id to (parts[1].toIntOrNull() ?: 0) } }
+        }.toMap()
+    )
+    val playCounts: StateFlow<Map<Long, Int>> = _playCounts.asStateFlow()
+
     val recentlyPlayed: StateFlow<List<Song>> = combine(librarySongs, _recentIds) { all, ids ->
         ids.mapNotNull { id -> all.find { it.id == id } }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -68,9 +83,17 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             playerConnection.currentSong.collect { song ->
                 if (song != null) {
+                    val now = System.currentTimeMillis()
                     val ids = (listOf(song.id) + _recentIds.value.filterNot { it == song.id }).take(12)
                     _recentIds.value = ids
-                    preferences.edit().putString("recently_played_ids", ids.joinToString(",")).apply()
+                    _recentPlayedAt.value = _recentPlayedAt.value.toMutableMap().apply { put(song.id, now) }
+                    val counts = _playCounts.value.toMutableMap().apply { put(song.id, (get(song.id) ?: 0) + 1) }
+                    _playCounts.value = counts
+                    preferences.edit()
+                        .putString("recently_played_ids", ids.joinToString(","))
+                        .putString("recently_played_timestamps", _recentPlayedAt.value.entries.joinToString(",") { "${it.key}:${it.value}" })
+                        .putString("play_counts", counts.entries.joinToString(",") { "${it.key}:${it.value}" })
+                        .apply()
                 }
             }
         }
