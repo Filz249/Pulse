@@ -30,6 +30,7 @@ import com.pulse.music.ui.components.MiniPlayer
 import com.pulse.music.ui.navigation.Screen
 import com.pulse.music.ui.screens.home.HomeScreen
 import com.pulse.music.ui.screens.home.HomeViewModel
+import com.pulse.music.ui.screens.album.AlbumScreen
 import com.pulse.music.ui.screens.player.PlayerScreen
 import com.pulse.music.ui.screens.player.PlayerViewModel
 import com.pulse.music.ui.screens.settings.SettingsScreen
@@ -83,11 +84,24 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     homeViewModel,
                                     onSongClick = { list, index -> homeViewModel.playSong(list, index) },
+                                    onAlbumClick = { albumId -> navController.navigate(Screen.Album.createRoute(albumId)) },
                                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
                                     onEditSongTags = { song ->
                                         navController.navigate(
                                             Screen.TagEditor.createRoute(song.filePath, song.uri.toString(), song.albumId)
                                         )
+                                    }
+                                )
+                            }
+                            composable(Screen.Album.route, arguments = listOf(navArgument("albumId") { type = NavType.LongType })) { entry ->
+                                val albumId = entry.arguments?.getLong("albumId") ?: -1L
+                                AlbumScreen(
+                                    viewModel = homeViewModel,
+                                    albumId = albumId,
+                                    onBackClick = { navController.popBackStack() },
+                                    onPlaySongs = { tracks, index -> homeViewModel.playSong(tracks, index) },
+                                    onEditSongTags = { song ->
+                                        navController.navigate(Screen.TagEditor.createRoute(song.filePath, song.uri.toString(), song.albumId))
                                     }
                                 )
                             }
