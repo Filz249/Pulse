@@ -6,6 +6,8 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import com.pulse.music.R
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.Player
+import com.pulse.music.widget.PulseWidgetProvider
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -43,7 +45,30 @@ class AudioPlayerService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
 
+        player.addListener(object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                AudioSessionState.update(audioSessionId)
+            }
+
+            override fun onMediaMetadataChanged(mediaMetadata: androidx.media3.common.MediaMetadata) {
+                updateWidget(player)
+            }
+
+            override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+                updateWidget(player)
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                updateWidget(player)
+            }
+        })
         mediaSession = MediaSession.Builder(this, player).build()
+    }
+
+    private fun updateWidget(player: ExoPlayer) {
+        val title = player.mediaMetadata.title?.toString()?.takeIf { it.isNotBlank() } ?: "Nothing playing"
+        val artist = player.mediaMetadata.artist?.toString()?.takeIf { it.isNotBlank() } ?: "Open Pulse to choose a song"
+        PulseWidgetProvider.updatePlaybackState(this, title, artist, player.isPlaying)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
@@ -63,6 +88,7 @@ class AudioPlayerService : MediaSessionService() {
             release()
         }
         mediaSession = null
+        AudioSessionState.update(0)
         super.onDestroy()
     }
 }
