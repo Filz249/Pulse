@@ -65,6 +65,28 @@ class HomeViewModel @Inject constructor(
         ids.mapNotNull { id -> all.find { it.id == id } }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val widgetPreferences = context.getSharedPreferences("pulse_widget_state", Context.MODE_PRIVATE)
+    private val _favoriteIds = MutableStateFlow(readFavoriteIds())
+    val favoriteIds: StateFlow<Set<Long>> = _favoriteIds.asStateFlow()
+    val favoriteSongs: StateFlow<List<Song>> = combine(librarySongs, _favoriteIds) { all, ids ->
+        all.filter { it.id in ids }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private fun readFavoriteIds(): Set<Long> =
+        (widgetPreferences.getStringSet("favorite_media_ids", emptySet()) ?: emptySet())
+            .mapNotNull { it.toLongOrNull() }.toSet()
+
+    fun refreshFavorites() {
+        _favoriteIds.value = readFavoriteIds()
+    }
+
+    fun toggleFavorite(songId: Long) {
+        val ids = _favoriteIds.value.toMutableSet()
+        if (!ids.add(songId)) ids.remove(songId)
+        _favoriteIds.value = ids
+        widgetPreferences.edit().putStringSet("favorite_media_ids", ids.map { it.toString() }.toSet()).apply()
+    }
+
     private val _recentPlaylistIds = MutableStateFlow(
         preferences.getString("recently_played_playlist_ids", "").orEmpty().split(",").mapNotNull { it.toLongOrNull() }
     )
