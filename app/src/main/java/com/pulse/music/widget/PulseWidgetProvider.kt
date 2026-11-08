@@ -80,7 +80,6 @@ class PulseWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.widget_next, android.R.drawable.ic_media_next)
             views.setImageViewResource(R.id.widget_open, android.R.drawable.ic_menu_sort_by_size)
             views.setInt(R.id.widget_title, "setTextColor", Color.WHITE)
-            views.setInt(R.id.widget_brand, "setTextColor", accent)
             views.setInt(R.id.widget_play_pause, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_previous, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_next, "setColorFilter", Color.WHITE)
