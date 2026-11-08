@@ -67,6 +67,7 @@ fun HomeScreen(
     val recent by viewModel.recentlyPlayed.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
     val recentPlaylists by viewModel.recentlyPlayedPlaylists.collectAsState()
+    val favoriteSongs by viewModel.favoriteSongs.collectAsState()
     val playCounts by viewModel.playCounts.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
 
@@ -79,6 +80,7 @@ fun HomeScreen(
 
     LaunchedEffect(permissionState.status.isGranted) { if (permissionState.status.isGranted) viewModel.refresh() }
     LaunchedEffect(selectedBottomTab) {
+        viewModel.refreshFavorites()
         if (selectedBottomTab != HomeNavigationTab.SEARCH) viewModel.onSearchQueryChanged("")
         if (selectedBottomTab == HomeNavigationTab.CREATE) {
             songForNewPlaylist = null
@@ -267,6 +269,21 @@ fun HomeScreen(
                         LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
                     }
                 } else if (selectedBottomTab == HomeNavigationTab.PLAYLISTS) {
+                    item { SectionHeading("Favorites", "${favoriteSongs.size} saved tracks") }
+                    if (favoriteSongs.isEmpty()) {
+                        item { EmptyHint("Tap the heart on the player widget to save the current song here.") }
+                    } else {
+                        itemsIndexed(favoriteSongs, key = { _, song -> song.id }) { index, song ->
+                            LibrarySongRow(
+                                song,
+                                playlists,
+                                { onSongClick(favoriteSongs, index) },
+                                { onEditSongTags(song) },
+                                { track, id -> viewModel.addSongToPlaylist(track, id) },
+                                { songForNewPlaylist = song; createOpen = true }
+                            )
+                        }
+                    }
                     item { SectionHeading("Playlists", "Your personal collections") }
                     item { PlaylistSection(playlists, { viewModel.playPlaylist(it) }, { createOpen = true }, true) }
                 }
