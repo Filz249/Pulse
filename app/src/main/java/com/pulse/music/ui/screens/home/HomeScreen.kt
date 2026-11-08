@@ -77,6 +77,7 @@ fun HomeScreen(
 
     LaunchedEffect(permissionState.status.isGranted) { if (permissionState.status.isGranted) viewModel.refresh() }
     LaunchedEffect(selectedBottomTab) {
+        if (selectedBottomTab != HomeNavigationTab.SEARCH) viewModel.onSearchQueryChanged("")
         if (selectedBottomTab == HomeNavigationTab.CREATE) {
             songForNewPlaylist = null
             createOpen = true
