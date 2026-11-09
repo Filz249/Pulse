@@ -9,6 +9,12 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.BitmapShader
 import android.net.Uri
 import android.widget.RemoteViews
 import com.pulse.music.R
@@ -83,18 +89,24 @@ class PulseWidgetProvider : AppWidgetProvider() {
             }
             if (artworkBitmap == null) {
                 views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_pulse_equalizer)
+                views.setImageViewResource(R.id.widget_backdrop, R.drawable.widget_pulse_background)
             } else {
-                val scaled = Bitmap.createScaledBitmap(artworkBitmap, 256, 256, true)
-                if (scaled !== artworkBitmap) artworkBitmap.recycle()
-                views.setImageViewBitmap(R.id.widget_artwork, scaled)
+                val cover = createEdgeToEdgeCover(artworkBitmap, 256)
+                val backdrop = createBackdrop(artworkBitmap, 480, 120)
+                views.setImageViewBitmap(R.id.widget_artwork, cover)
+                views.setImageViewBitmap(R.id.widget_backdrop, backdrop)
+                cover.recycle()
+                backdrop.recycle()
+                artworkBitmap.recycle()
             }
-            views.setImageViewResource(R.id.widget_favorite, R.drawable.widget_ic_heart)
+            views.setImageViewResource(R.id.widget_favorite, if (isFavorite) R.drawable.widget_ic_heart_filled else R.drawable.widget_ic_heart)
             views.setInt(R.id.widget_favorite, "setColorFilter", if (isFavorite) accent else Color.WHITE)
-            views.setImageViewResource(R.id.widget_previous, android.R.drawable.ic_media_previous)
-            views.setImageViewResource(R.id.widget_play_pause, if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
-            views.setImageViewResource(R.id.widget_next, android.R.drawable.ic_media_next)
-            views.setImageViewResource(R.id.widget_open, android.R.drawable.ic_menu_sort_by_size)
+            views.setImageViewResource(R.id.widget_previous, R.drawable.widget_ic_previous)
+            views.setImageViewResource(R.id.widget_play_pause, if (isPlaying) R.drawable.widget_ic_pause else R.drawable.widget_ic_play)
+            views.setImageViewResource(R.id.widget_next, R.drawable.widget_ic_next)
+            views.setImageViewResource(R.id.widget_open, R.drawable.widget_ic_queue)
             views.setInt(R.id.widget_title, "setTextColor", Color.WHITE)
+            views.setInt(R.id.widget_artist, "setTextColor", Color.rgb(225, 211, 198))
             views.setInt(R.id.widget_play_pause, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_previous, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_next, "setColorFilter", Color.WHITE)
@@ -110,6 +122,30 @@ class PulseWidgetProvider : AppWidgetProvider() {
             manager.updateAppWidget(widgetId, views)
         }
 
+        private fun createEdgeToEdgeCover(source: Bitmap, size: Int): Bitmap {
+            val side = minOf(source.width, source.height).coerceAtLeast(1)
+            val cropped = Bitmap.createBitmap(source, (source.width - side) / 2, (source.height - side) / 2, side, side)
+            val scaled = Bitmap.createScaledBitmap(cropped, size, size, true)
+            if (cropped !== source) cropped.recycle()
+
+            val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(output)
+            val shader = BitmapShader(scaled, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.shader = shader }
+            val radius = size * 0.20f
+            val radii = floatArrayOf(radius, radius, 0f, 0f, 0f, 0f, radius, radius)
+            val path = Path().apply { addRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), radii, Path.Direction.CW) }
+            canvas.drawPath(path, paint)
+            scaled.recycle()
+            return output
+        }
+
+        private fun createBackdrop(source: Bitmap, width: Int, height: Int): Bitmap {
+            val tiny = Bitmap.createScaledBitmap(source, 28, 12, true)
+            val backdrop = Bitmap.createScaledBitmap(tiny, width, height, true)
+            if (tiny !== source) tiny.recycle()
+            return backdrop
+        }
         private fun accentFor(context: Context): Int {
             val prefs = context.getSharedPreferences("pulse_ui_preferences", Context.MODE_PRIVATE)
             val custom = prefs.getString("custom_accent_hex", null)
@@ -127,7 +163,9 @@ class PulseWidgetProvider : AppWidgetProvider() {
         }
 
         private fun actionPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
-            val intent = Intent(context, PulseWidgetActionReceiver::class.java).setAction(action)
+            val intent = Intent(context, PulseWidgetActionReceiver::class.java)
+                .setAction(action)
+                .setData(Uri.parse("pulse-widget://action/$action"))
             return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 
