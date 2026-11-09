@@ -95,8 +95,6 @@ class PulseWidgetProvider : AppWidgetProvider() {
                 val backdrop = createBackdrop(artworkBitmap, 480, 120)
                 views.setImageViewBitmap(R.id.widget_artwork, cover)
                 views.setImageViewBitmap(R.id.widget_backdrop, backdrop)
-                cover.recycle()
-                backdrop.recycle()
                 artworkBitmap.recycle()
             }
             views.setImageViewResource(R.id.widget_favorite, if (isFavorite) R.drawable.widget_ic_heart_filled else R.drawable.widget_ic_heart)
