@@ -1,0 +1,172 @@
+name: Recheck cancelled Pulse builds
+
+on:
+  push:
+    branches:
+      - ci/recheck-cancelled-2026-11-09
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulse-historical-recheck-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: "Original run #${{ matrix.run_number }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - run_number: 88
+            sha: 9d2110bf37c4570a36070340fe79d0a5ac41c7d5
+          - run_number: 83
+            sha: 106592fcc476bee1ebe54d2212447fd68e0a7a1d
+          - run_number: 82
+            sha: 5b48f05b8f786584a8bffce17d2c48243d36cd24
+          - run_number: 81
+            sha: b28ef0e96c4a0c85795d3bea8347762cb4186b39
+          - run_number: 80
+            sha: e8a7b4e28aba483f6029849324fe51f3c9eda18e
+          - run_number: 79
+            sha: 220207fcd7302137b23baa536e5dc8a1164c3edd
+          - run_number: 78
+            sha: cddf11e715b848d6dafe7468175d2199ee7eca82
+          - run_number: 77
+            sha: d205e37d553222c3e168325a330efabb8c113150
+          - run_number: 76
+            sha: defab2f0ea96dd100c90dd20160014d14035e386
+          - run_number: 75
+            sha: 750ae80e98597eb3ab57717c05bc2434e3577d38
+          - run_number: 74
+            sha: dd1adc3b52696a6569fbe2afe975a8aa8f933a5e
+          - run_number: 72
+            sha: e3d63b1cf423bdaf0f83874348a8c77266b3a5ce
+          - run_number: 71
+            sha: 6deb9083f7ff6459e923076dbcd0293f66526f5e
+          - run_number: 70
+            sha: 3bbc1d9e39fd38064aabb9b963408c0cf849511a
+          - run_number: 69
+            sha: 059df8605b588c2199ba5ccec6239777be95b532
+          - run_number: 68
+            sha: bedba25028c27b4bbb2dbb54c3ffecc63a095cbc
+          - run_number: 67
+            sha: 48a0f08d0f53fd82b7806d264060db1959adbcc6
+          - run_number: 66
+            sha: b105ea4c70053aa8427ac880040bfd0113a7fa69
+          - run_number: 65
+            sha: 7e884716604793c9dbe6fe66fee62da41d9fddae
+          - run_number: 64
+            sha: 604230ce7c018ad56cbc95ac8f216b9913b0a316
+          - run_number: 59
+            sha: 1dc10f3e7cd931a654c3f78f7cefeead1b99872a
+          - run_number: 58
+            sha: 1809012d43f6545095178980d8525b5c1ee3386b
+          - run_number: 57
+            sha: ff29a59761a3a88e272d4891f9475060c4efcc51
+          - run_number: 56
+            sha: 695f170a78ae422fa3b9e968e52d1eb841939470
+          - run_number: 55
+            sha: 41f373f7700484c123f0e595424e9688851ee3dd
+          - run_number: 54
+            sha: 1c1cbc5e9d30cdcef7ccceacef82775e0b3616e2
+          - run_number: 53
+            sha: 29c9332c9d92e31c0d2192bb3dd0054341d98d11
+          - run_number: 52
+            sha: e57898795f17106e6cc774de73de1a2113ed4691
+          - run_number: 51
+            sha: ed3d08ff36ece4656d8ac56ba2ea4cfcc79a9110
+          - run_number: 50
+            sha: 91cba908b09a3d3babb9e1f6c72f00e8851e6973
+          - run_number: 49
+            sha: e078d97d08105c2513ef36aca993809e7e469cbd
+          - run_number: 47
+            sha: 753d71b46326acc5296ef860e142ebc4c37742a5
+          - run_number: 45
+            sha: bf9b1cb300fc2c866fabd3f9bd37339706eada8a
+          - run_number: 44
+            sha: 3a8e0f154d93b0d4b1a2bb2742786664d25b7363
+          - run_number: 43
+            sha: 6d3b7f17e96ab168be989231d4d328f4e16cdaea
+          - run_number: 42
+            sha: e063fc7e97bf9a79730c6823e9495cd558b10f22
+          - run_number: 41
+            sha: bef30f480997fc456244614ee87cb830f49008a7
+          - run_number: 40
+            sha: c70b7d6f5688b74dd3a8838d8d986729d2a71258
+          - run_number: 39
+            sha: aff58ae42d851acde8ee83e8774a81b05406e8da
+          - run_number: 37
+            sha: d67225442114ef56866c2dd43f38576f479c82b5
+          - run_number: 35
+            sha: 041a9df7028879d0c531f110119184bf4fa9dfc1
+          - run_number: 34
+            sha: 312c645ac61b2e39d1251180feaeb7f9cdb8119a
+          - run_number: 29
+            sha: be22ee7c93c3b27c8267838a2c7a97e1ed020f42
+          - run_number: 28
+            sha: 4e198b7937848055d3ef3665b7dc430331ab9bb7
+          - run_number: 27
+            sha: a1eeb57bebf831c2ebb642ca0e08feb9bb35c156
+          - run_number: 26
+            sha: b40a5d883fde88f20d08862388824541ace5db91
+          - run_number: 25
+            sha: 283cbe4066fe178898748d90c579a195f9c81ea7
+          - run_number: 23
+            sha: 053e4d28d61f203753daa27649cd4a952f4a97f4
+          - run_number: 22
+            sha: afebe80d31d6186cdba501bc5ac115549a891542
+          - run_number: 21
+            sha: 5c1f00cf63a2408c48902b23bf841666987d8a91
+          - run_number: 20
+            sha: ef655d5011f7d65cd22f4f5e93addc152d88bd47
+          - run_number: 18
+            sha: c0a7452aa978ba203bdfbfc64de706d07b095ab8
+    steps:
+      - name: Checkout original commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test this exact commit
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon testDebugUnitTest assembleDebug 2>&1 | tee build.log
+          test -s app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Record result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Original cancelled run #${{ matrix.run_number }}"
+            echo
+            echo "- Commit: ${{ matrix.sha }}"
+            echo "- Build result: ${{ steps.build.outcome }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload log for failed build
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-build-log-${{ matrix.run_number }}-${{ matrix.sha }}
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
