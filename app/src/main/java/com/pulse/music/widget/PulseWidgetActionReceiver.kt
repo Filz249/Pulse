@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -35,7 +36,7 @@ class PulseWidgetActionReceiver : BroadcastReceiver() {
         val appContext = context.applicationContext
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
             try {
-                val completed = playerConnection.handleWidgetAction(playerAction)
+                val completed = withTimeout(8_000L) { playerConnection.handleWidgetAction(playerAction) }
                 if (!completed) {
                     Toast.makeText(appContext, "Open Pulse and start a song before using the widget controls.", Toast.LENGTH_SHORT).show()
                 }
