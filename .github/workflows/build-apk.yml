@@ -14,9 +14,11 @@ on:
 permissions:
   contents: write
 
+# Give every run its own concurrency group so a newer push never kills
+# a build that is already running or waiting for a runner.
 concurrency:
-  group: pulse-android-${{ github.ref }}
-  cancel-in-progress: true
+  group: pulse-android-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -103,8 +105,27 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Check whether this run may update the latest release
+        id: release_gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            current_main="$(git ls-remote origin refs/heads/main 2>/dev/null | awk 'NR == 1 {print $1}' || true)"
+            if [[ -n "${current_main}" && "${current_main}" == "${GITHUB_SHA}" ]]; then
+              echo "publish=true" >> "${GITHUB_OUTPUT}"
+            else
+              echo "publish=false" >> "${GITHUB_OUTPUT}"
+              echo "Skipping latest release because a newer commit is on main."
+            fi
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Publish latest or versioned GitHub Release
-        if: success() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        if: success() && steps.release_gate.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
