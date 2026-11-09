@@ -41,8 +41,8 @@
             android:gravity="center_vertical"
             android:paddingStart="10dp"
             android:paddingEnd="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp">
 
             <TextView
                 android:id="@+id/widget_title"
@@ -52,7 +52,7 @@
                 android:maxLines="1"
                 android:text="Ready To Play"
                 android:textColor="#FFF6EEE5"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -64,11 +64,11 @@
                 android:maxLines="1"
                 android:text="Choose a song in Pulse"
                 android:textColor="#FFD1C5B8"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="38dp"
+                android:layout_height="34dp"
                 android:layout_marginTop="2dp"
                 android:gravity="center"
                 android:orientation="horizontal">
@@ -76,7 +76,7 @@
                 <ImageButton
                     android:id="@+id/widget_favorite"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
+                    android:layout_height="34dp"
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
                     android:contentDescription="Favorite current song"
