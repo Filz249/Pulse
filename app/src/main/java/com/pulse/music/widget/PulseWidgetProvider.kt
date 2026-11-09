@@ -126,7 +126,7 @@ class PulseWidgetProvider : AppWidgetProvider() {
             val side = minOf(source.width, source.height).coerceAtLeast(1)
             val cropped = Bitmap.createBitmap(source, (source.width - side) / 2, (source.height - side) / 2, side, side)
             val scaled = Bitmap.createScaledBitmap(cropped, size, size, true)
-            if (cropped !== source) cropped.recycle()
+            if (cropped !== source && cropped !== scaled) cropped.recycle()
 
             val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(output)
@@ -136,7 +136,7 @@ class PulseWidgetProvider : AppWidgetProvider() {
             val radii = floatArrayOf(radius, radius, 0f, 0f, 0f, 0f, radius, radius)
             val path = Path().apply { addRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), radii, Path.Direction.CW) }
             canvas.drawPath(path, paint)
-            scaled.recycle()
+            if (scaled !== source) scaled.recycle()
             return output
         }
 
