@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
@@ -87,34 +88,32 @@ class PlayerConnection @Inject constructor(
         })
     }
 
-    fun handleWidgetAction(action: String) {
-        scope.launch {
-            runCatching {
-                if (mediaController == null) connect()
-                val controller = mediaController ?: return@launch
-                when (action) {
-                    "PLAY_PAUSE" -> {
-                        if (controller.isPlaying || controller.playWhenReady) controller.pause() else controller.play()
-                    }
-                    "NEXT" -> if (controller.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) {
-                        controller.seekToNextMediaItem()
-                    }
-                    "PREVIOUS" -> if (controller.mediaItemCount > 0) {
+    suspend fun handleWidgetAction(action: String): Boolean = withContext(Dispatchers.Main.immediate) {
+        try {
+            if (mediaController == null) connect()
+            val controller = mediaController ?: return@withContext false
+            when (action) {
+                "PLAY_PAUSE" -> {
+                    if (controller.isPlaying || controller.playWhenReady) controller.pause() else controller.play()
+                }
+                "NEXT" -> {
+                    if (controller.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) controller.seekToNextMediaItem()
+                }
+                "PREVIOUS" -> {
+                    if (controller.mediaItemCount > 0) {
                         if (controller.currentPosition > 3_000L ||
                             !controller.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                        ) {
-                            controller.seekTo(0L)
-                        } else {
-                            controller.seekToPreviousMediaItem()
-                        }
+                        ) controller.seekTo(0L) else controller.seekToPreviousMediaItem()
                     }
                 }
-            }.onFailure { error ->
-                android.util.Log.e("PulseWidgetAction", "Unable to route widget action: $action", error)
+                else -> return@withContext false
             }
+            true
+        } catch (error: Exception) {
+            android.util.Log.e("PulseWidgetAction", "Unable to route widget action: $action", error)
+            false
         }
     }
-
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
         currentPlaylist = songs
         mediaController?.apply {
