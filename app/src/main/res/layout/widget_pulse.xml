@@ -3,20 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_pulse_background"
-    android:clipToOutline="true">
+">
 
     <ImageView
         android:id="@+id/widget_backdrop"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:contentDescription="@null"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        android:background="#FF211B18" />
 
-    <View
+    <ImageView
         android:id="@+id/widget_backdrop_scrim"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#B80C0A09" />
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_scrim" />
 
     <LinearLayout
         android:layout_width="match_parent"
