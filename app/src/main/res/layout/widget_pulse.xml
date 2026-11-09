@@ -30,10 +30,10 @@
 
         <ImageView
             android:id="@+id/widget_artwork"
-            android:layout_width="80dp"
+            android:layout_width="72dp"
             android:layout_height="match_parent"
             android:contentDescription="Current album artwork"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_pulse_equalizer" />
 
         <LinearLayout

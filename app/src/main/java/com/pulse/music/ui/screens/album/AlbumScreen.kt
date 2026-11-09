@@ -24,12 +24,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.pulse.music.domain.model.Song
+import com.pulse.music.ui.components.PlaybackEqualizer
 import com.pulse.music.ui.screens.home.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumScreen(viewModel: HomeViewModel, albumId: Long, onBackClick: () -> Unit, onPlaySongs: (List<Song>, Int) -> Unit, onEditSongTags: (Song) -> Unit) {
     val allSongs by viewModel.librarySongs.collectAsState()
+    val currentSong by viewModel.playerConnection.currentSong.collectAsState()
+    val isPlaying by viewModel.playerConnection.isPlaying.collectAsState()
     val tracks = remember(allSongs, albumId) { allSongs.filter { it.albumId == albumId }.sortedWith(compareBy<Song> { it.trackNumber.takeIf { n -> n > 0 } ?: Int.MAX_VALUE }.thenBy { it.title.lowercase() }) }
     val first = tracks.firstOrNull()
     val artworkAccent = MaterialTheme.colorScheme.primary
@@ -72,7 +75,13 @@ fun AlbumScreen(viewModel: HomeViewModel, albumId: Long, onBackClick: () -> Unit
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(if (song.trackNumber > 0) song.trackNumber.toString() else (index + 1).toString(), modifier = Modifier.width(30.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         Column(Modifier.weight(1f).clickable { onPlaySongs(tracks, index) }.padding(vertical = 10.dp)) {
-                            Text(song.title, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(song.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (song.id == currentSong?.id) {
+                                    Spacer(Modifier.width(6.dp))
+                                    PlaybackEqualizer(isPlaying = isPlaying)
+                                }
+                            }
                             Text(song.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         Box {

@@ -13,8 +13,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.Shader
-import android.graphics.BitmapShader
 import android.net.Uri
 import android.widget.RemoteViews
 import com.pulse.music.R
@@ -90,7 +88,7 @@ class PulseWidgetProvider : AppWidgetProvider() {
             if (artworkBitmap == null) {
                 views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_pulse_equalizer)
             } else {
-                val cover = createEdgeToEdgeCover(artworkBitmap, 256)
+                val cover = createRoundedFitCover(artworkBitmap, 256)
                 val backdrop = createBackdrop(artworkBitmap, 480, 120)
                 views.setImageViewBitmap(R.id.widget_artwork, cover)
                 views.setImageViewBitmap(R.id.widget_backdrop, backdrop)
@@ -111,21 +109,34 @@ class PulseWidgetProvider : AppWidgetProvider() {
             manager.updateAppWidget(widgetId, views)
         }
 
-        private fun createEdgeToEdgeCover(source: Bitmap, size: Int): Bitmap {
-            val side = minOf(source.width, source.height).coerceAtLeast(1)
-            val cropped = Bitmap.createBitmap(source, (source.width - side) / 2, (source.height - side) / 2, side, side)
-            val scaled = Bitmap.createScaledBitmap(cropped, size, size, true)
-            if (cropped !== source && cropped !== scaled) cropped.recycle()
-
+        private fun createRoundedFitCover(source: Bitmap, size: Int): Bitmap {
             val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(output)
-            val shader = BitmapShader(scaled, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.shader = shader }
-            val radius = size * 0.20f
-            val radii = floatArrayOf(radius, radius, 0f, 0f, 0f, 0f, radius, radius)
-            val path = Path().apply { addRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), radii, Path.Direction.CW) }
-            canvas.drawPath(path, paint)
-            if (scaled !== source) scaled.recycle()
+            val radius = size * 0.25f
+            val radii = floatArrayOf(
+                radius, radius, radius, radius,
+                radius, radius, radius, radius
+            )
+            val bounds = RectF(0f, 0f, size.toFloat(), size.toFloat())
+            val clip = Path().apply { addRoundRect(bounds, radii, Path.Direction.CW) }
+
+            canvas.save()
+            canvas.clipPath(clip)
+            canvas.drawColor(Color.rgb(33, 27, 24))
+
+            // Fit the complete source artwork into the square instead of center-cropping it.
+            val scale = minOf(size.toFloat() / source.width, size.toFloat() / source.height)
+            val fittedWidth = source.width * scale
+            val fittedHeight = source.height * scale
+            val destination = RectF(
+                (size - fittedWidth) / 2f,
+                (size - fittedHeight) / 2f,
+                (size + fittedWidth) / 2f,
+                (size + fittedHeight) / 2f
+            )
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            canvas.drawBitmap(source, null, destination, paint)
+            canvas.restore()
             return output
         }
 

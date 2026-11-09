@@ -195,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                                 song = currentSong,
                                                 isPlaying = isPlaying,
                                                 onTogglePlayPause = { homeViewModel.playerConnection.togglePlayPause() },
+                                                onSkipPrevious = { homeViewModel.playerConnection.skipPrevious() },
                                                 onSkipNext = { homeViewModel.playerConnection.skipNext() },
                                                 onExpandClick = { navController.navigate(Screen.Player.route) }
                                             )

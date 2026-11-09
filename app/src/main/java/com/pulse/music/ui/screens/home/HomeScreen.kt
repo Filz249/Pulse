@@ -45,6 +45,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pulse.music.domain.model.Playlist
 import com.pulse.music.domain.model.Song
+import com.pulse.music.ui.components.PlaybackEqualizer
 
 enum class HomeNavigationTab { HOME, SEARCH, PLAYLISTS, CREATE }
 private enum class LibraryCategory(val label: String) { SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists") }
@@ -72,6 +73,8 @@ fun HomeScreen(
     val recentPlaylists by viewModel.recentlyPlayedPlaylists.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
     val playCounts by viewModel.playCounts.collectAsState()
+    val currentSong by viewModel.playerConnection.currentSong.collectAsState()
+    val isPlaying by viewModel.playerConnection.isPlaying.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
 
     var category by remember { mutableStateOf(LibraryCategory.SONGS) }
@@ -251,7 +254,7 @@ fun HomeScreen(
                             item { Text("Your local collection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                             if (songs.isEmpty()) item { EmptyHint("Songs appear here when audio is added to your library.") }
                             itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                                LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
+                                LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true }, currentSongId = currentSong?.id, isPlaying = isPlaying)
                             }
                         }
                         LibraryCategory.ALBUMS -> {
@@ -277,7 +280,7 @@ fun HomeScreen(
                     item { SectionHeading("Search results", "${songs.size} matches in your library") }
                     if (songs.isEmpty()) item { EmptyHint(if (query.isBlank()) "Search your local music library." else "No matches found. Try another search.") }
                     itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                        LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true })
+                        LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true }, currentSongId = currentSong?.id, isPlaying = isPlaying)
                     }
                 } else if (selectedBottomTab == HomeNavigationTab.PLAYLISTS) {
                     item { SectionHeading("Favorites", "${favoriteSongs.size} saved tracks") }
@@ -291,7 +294,9 @@ fun HomeScreen(
                                 { onSongClick(favoriteSongs, index) },
                                 { onEditSongTags(song) },
                                 { track, id -> viewModel.addSongToPlaylist(track, id) },
-                                { songForNewPlaylist = song; createOpen = true }
+                                { songForNewPlaylist = song; createOpen = true },
+                                currentSongId = currentSong?.id,
+                                isPlaying = isPlaying
                             )
                         }
                     }
@@ -413,14 +418,21 @@ private fun CompactLibraryRow(song: Song, title: String, subtitle: String, circu
 @Composable
 private fun LibrarySongRow(
     song: Song, playlists: List<Playlist>, onPlay: () -> Unit, onEdit: () -> Unit,
-    onAdd: (Song, Long) -> Unit, onCreatePlaylist: () -> Unit
+    onAdd: (Song, Long) -> Unit, onCreatePlaylist: () -> Unit,
+    currentSongId: Long? = null, isPlaying: Boolean = false
 ) {
     var menuOpen by remember(song.id) { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().clickable(onClick = onPlay).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Artwork(song, Modifier.size(54.dp), 9.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(song.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(song.title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (song.id == currentSongId) {
+                    Spacer(Modifier.width(6.dp))
+                    PlaybackEqualizer(isPlaying = isPlaying)
+                }
+            }
             Text("${song.artist} · ${song.album}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box {
