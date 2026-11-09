@@ -89,7 +89,6 @@ class PulseWidgetProvider : AppWidgetProvider() {
             }
             if (artworkBitmap == null) {
                 views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_pulse_equalizer)
-                views.setImageViewResource(R.id.widget_backdrop, R.drawable.widget_pulse_background)
             } else {
                 val cover = createEdgeToEdgeCover(artworkBitmap, 256)
                 val backdrop = createBackdrop(artworkBitmap, 480, 120)
@@ -98,18 +97,10 @@ class PulseWidgetProvider : AppWidgetProvider() {
                 artworkBitmap.recycle()
             }
             views.setImageViewResource(R.id.widget_favorite, if (isFavorite) R.drawable.widget_ic_heart_filled else R.drawable.widget_ic_heart)
-            views.setInt(R.id.widget_favorite, "setColorFilter", if (isFavorite) accent else Color.WHITE)
             views.setImageViewResource(R.id.widget_previous, R.drawable.widget_ic_previous)
             views.setImageViewResource(R.id.widget_play_pause, if (isPlaying) R.drawable.widget_ic_pause else R.drawable.widget_ic_play)
             views.setImageViewResource(R.id.widget_next, R.drawable.widget_ic_next)
             views.setImageViewResource(R.id.widget_open, R.drawable.widget_ic_queue)
-            views.setInt(R.id.widget_title, "setTextColor", Color.WHITE)
-            views.setInt(R.id.widget_artist, "setTextColor", Color.rgb(225, 211, 198))
-            views.setInt(R.id.widget_play_pause, "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_previous, "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_next, "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_open, "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_play_pause, "setBackgroundResource", R.drawable.widget_play_button_bg)
             views.setOnClickPendingIntent(R.id.widget_favorite, actionPendingIntent(context, ACTION_FAVORITE, 8100))
             views.setOnClickPendingIntent(R.id.widget_previous, actionPendingIntent(context, ACTION_PREVIOUS, 8103))
             views.setOnClickPendingIntent(R.id.widget_play_pause, actionPendingIntent(context, ACTION_PLAY_PAUSE, 8101))
