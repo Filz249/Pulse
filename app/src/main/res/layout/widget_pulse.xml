@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_pulse_background">
+    android:background="@drawable/widget_pulse_background"
+    android:clipToOutline="true">
 
     <ImageView
         android:id="@+id/widget_backdrop"
@@ -29,10 +30,10 @@
 
         <ImageView
             android:id="@+id/widget_artwork"
-            android:layout_width="72dp"
+            android:layout_width="80dp"
             android:layout_height="match_parent"
             android:contentDescription="Current album artwork"
-            android:scaleType="fitXY"
+            android:scaleType="centerCrop"
             android:src="@drawable/ic_pulse_equalizer" />
 
         <LinearLayout
@@ -41,7 +42,7 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center_vertical"
-            android:paddingStart="10dp"
+            android:paddingStart="9dp"
             android:paddingEnd="8dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp">
@@ -72,63 +73,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="34dp"
                 android:layout_marginTop="2dp"
-                android:gravity="center"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageButton
-                    android:id="@+id/widget_favorite"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="Favorite current song"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/widget_ic_heart" />
-
-                <ImageButton
-                    android:id="@+id/widget_previous"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="Previous song"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/widget_ic_previous" />
-
-                <ImageButton
-                    android:id="@+id/widget_play_pause"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/widget_play_button_bg"
-                    android:contentDescription="Play or pause"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/widget_ic_play" />
-
-                <ImageButton
-                    android:id="@+id/widget_next"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="Next song"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/widget_ic_next" />
-
-                <ImageButton
-                    android:id="@+id/widget_open"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="Open Pulse queue"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/widget_ic_queue" />
+                <FrameLayout android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1">
+                    <ImageButton android:id="@+id/widget_favorite" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:background="@android:color/transparent" android:contentDescription="Favorite current song" android:padding="5dp" android:scaleType="fitCenter" android:src="@drawable/widget_ic_heart" />
+                </FrameLayout>
+                <FrameLayout android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1">
+                    <ImageButton android:id="@+id/widget_previous" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:background="@android:color/transparent" android:contentDescription="Previous song" android:padding="5dp" android:scaleType="fitCenter" android:src="@drawable/widget_ic_previous" />
+                </FrameLayout>
+                <FrameLayout android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1">
+                    <ImageButton android:id="@+id/widget_play_pause" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/widget_play_button_bg" android:contentDescription="Play or pause" android:padding="7dp" android:scaleType="fitCenter" android:src="@drawable/widget_ic_play" />
+                </FrameLayout>
+                <FrameLayout android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1">
+                    <ImageButton android:id="@+id/widget_next" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:background="@android:color/transparent" android:contentDescription="Next song" android:padding="5dp" android:scaleType="fitCenter" android:src="@drawable/widget_ic_next" />
+                </FrameLayout>
+                <FrameLayout android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1">
+                    <ImageButton android:id="@+id/widget_open" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:background="@android:color/transparent" android:contentDescription="Open Pulse queue" android:padding="5dp" android:scaleType="fitCenter" android:src="@drawable/widget_ic_queue" />
+                </FrameLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
