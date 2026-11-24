@@ -252,8 +252,8 @@ fun HomeScreen(
                                 Text("Your recent albums", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                recentAlbumGroups.forEach { albumSong ->
-                                    val albumSong = albumSong
+                                recentAlbumGroups.forEach { songEntry ->
+                                    val albumSong = songEntry
                                     Surface(
                                         modifier = Modifier.weight(1f).height(70.dp).clickable { onAlbumClick(albumSong.albumId) },
                                         shape = RoundedCornerShape(18.dp),
