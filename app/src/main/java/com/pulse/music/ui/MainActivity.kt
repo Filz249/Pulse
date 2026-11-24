@@ -202,15 +202,15 @@ class MainActivity : ComponentActivity() {
                                         }
                                         NavigationBar(
                                             windowInsets = WindowInsets.navigationBars,
-                                            containerColor = MaterialTheme.colorScheme.surface,
-                                            tonalElevation = 6.dp
+                                            containerColor = Color(0xFF2B2019),
+                                            tonalElevation = 0.dp
                                         ) {
                                             val navColors = NavigationBarItemDefaults.colors(
                                                 selectedIconColor = MaterialTheme.colorScheme.primary,
                                                 selectedTextColor = MaterialTheme.colorScheme.primary,
-                                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                                indicatorColor = Color(0xFF5A4122),
+                                                unselectedIconColor = Color(0xFFB8AFA8),
+                                                unselectedTextColor = Color(0xFFB8AFA8)
                                             )
                                             NavigationBarItem(
                                                 selected = selectedHomeTab == HomeNavigationTab.HOME,

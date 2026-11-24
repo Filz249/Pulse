@@ -4,6 +4,8 @@ import android.Manifest
 import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +26,11 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -158,20 +165,36 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onOpenMenu) {
-                            Icon(Icons.Default.Menu, contentDescription = "Open menu", tint = MaterialTheme.colorScheme.primary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(17.dp))
+                                Text("P U L S E", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(
+                                when (selectedBottomTab) {
+                                    HomeNavigationTab.HOME -> "Your library"
+                                    HomeNavigationTab.SEARCH -> "Search"
+                                    HomeNavigationTab.PLAYLISTS -> "Playlists"
+                                    HomeNavigationTab.CREATE -> "Create playlist"
+                                },
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                        Text(
-                            when (selectedBottomTab) {
-                                HomeNavigationTab.HOME -> "Your library"
-                                HomeNavigationTab.SEARCH -> "Search"
-                                HomeNavigationTab.PLAYLISTS -> "Playlists"
-                                HomeNavigationTab.CREATE -> "Create playlist"
-                            },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(18.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            modifier = Modifier.size(44.dp).clickable(onClick = onOpenMenu)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Menu, contentDescription = "Open menu", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
                     }
                 }
                 if (selectedBottomTab == HomeNavigationTab.HOME) {
@@ -199,12 +222,63 @@ fun HomeScreen(
                         }
                     }
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.Bottom) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Recently played", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                                 Spacer(Modifier.weight(1f))
-                                Text("Your listening", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("YOUR ROTATION  ›", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
+                            val featuredSong = currentSong ?: historySongs.firstOrNull()
+                            featuredSong?.let { featured ->
+                                FeaturedNowPlayingCard(
+                                    song = featured,
+                                    isPlaying = isPlaying && currentSong?.id == featured.id,
+                                    onShuffle = { viewModel.playerConnection.toggleShuffle() },
+                                    onPrevious = { viewModel.playerConnection.skipPrevious() },
+                                    onPlayPause = {
+                                        if (currentSong?.id == featured.id) viewModel.playerConnection.togglePlayPause()
+                                        else {
+                                            val index = librarySongs.indexOfFirst { it.id == featured.id }
+                                            if (index >= 0) onSongClick(librarySongs, index)
+                                        }
+                                    },
+                                    onNext = { viewModel.playerConnection.skipNext() }
+                                )
+                            }
+                        }
+                    }
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Your recent albums", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                recentAlbumGroups.forEach { albumSongs ->
+                                    val albumSong = albumSongs.first()
+                                    Surface(
+                                        modifier = Modifier.weight(1f).height(70.dp).clickable { onAlbumClick(albumSong.albumId) },
+                                        shape = RoundedCornerShape(18.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                                    ) {
+                                        Row(Modifier.fillMaxSize().padding(9.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                                            Artwork(albumSong, Modifier.size(48.dp), 10.dp)
+                                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(albumSong.album, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                                Text(albumSong.artist, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            }
+                                        }
+                                    }
+                                }
+                                repeat((2 - recentAlbumGroups.size).coerceAtLeast(0)) {
+                                    Spacer(Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Your listening", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             recentEntries.chunked(2).forEach { row ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     row.forEach { entry -> RecentGridCard(entry, Modifier.weight(1f)) }
@@ -283,6 +357,31 @@ fun HomeScreen(
                         LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true }, currentSongId = currentSong?.id, isPlaying = isPlaying)
                     }
                 } else if (selectedBottomTab == HomeNavigationTab.PLAYLISTS) {
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { createOpen = true },
+                            shape = RoundedCornerShape(24.dp),
+                            color = Color.Transparent,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Row(
+                                Modifier.background(Brush.linearGradient(listOf(Color(0xFF3A2B20), Color(0xFF221914)))).padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Surface(Modifier.size(52.dp), shape = RoundedCornerShape(16.dp), color = Color(0xFF5A4122)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("Create a playlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text("Start a new mood", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Icon(Icons.Default.Add, contentDescription = "Create playlist", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
                     item { SectionHeading("Favorites", "${favoriteSongs.size} saved tracks") }
                     if (favoriteSongs.isEmpty()) {
                         item { EmptyHint("Tap the heart on the player widget to save the current song here.") }
@@ -309,11 +408,67 @@ fun HomeScreen(
 }
 
 @Composable
+private fun FeaturedNowPlayingCard(
+    song: Song,
+    isPlaying: Boolean,
+    onShuffle: () -> Unit,
+    onPrevious: () -> Unit,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            Modifier
+                .background(Brush.linearGradient(listOf(Color(0xFF3A2B20), Color(0xFF221914))))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Artwork(song, Modifier.size(116.dp), 18.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                PlaybackEqualizer(isPlaying = isPlaying)
+                Text(song.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(song.artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(song.album, style = MaterialTheme.typography.labelSmall, color = Color(0xFFB8AFA8), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(top = 3.dp))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onShuffle, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Shuffle, contentDescription = "Shuffle", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(17.dp))
+                    }
+                    IconButton(onClick = onPrevious, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(19.dp))
+                    }
+                    FilledIconButton(
+                        onClick = onPlayPause,
+                        modifier = Modifier.size(40.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                    ) {
+                        Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = if (isPlaying) "Pause" else "Play")
+                    }
+                    IconButton(onClick = onNext, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(19.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun RecentGridCard(entry: RecentGridEntry, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(70.dp).clickable(onClick = entry.onClick),
-        shape = RoundedCornerShape(13.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f),
+        modifier = modifier.height(76.dp).clickable(onClick = entry.onClick),
+        shape = RoundedCornerShape(19.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
         Row(Modifier.fillMaxSize().padding(horizontal = 9.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -464,7 +619,12 @@ private fun PlaylistSection(playlists: List<Playlist>, onPlay: (Long) -> Unit, o
 
 @Composable
 private fun PlaylistCard(playlist: Playlist, onPlay: (Long) -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier.clickable { onPlay(playlist.id) }, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+    Surface(
+        modifier.clickable { onPlay(playlist.id) },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.MusicNote, null, tint = MaterialTheme.colorScheme.primary)
