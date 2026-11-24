@@ -186,11 +186,10 @@ fun HomeScreen(
                             )
                         }
                         Surface(
-                            onClick = onOpenMenu,
                             shape = RoundedCornerShape(18.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.size(44.dp)
+                            modifier = Modifier.size(44.dp).clickable(onClick = onOpenMenu)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(Icons.Default.Menu, contentDescription = "Open menu", tint = MaterialTheme.colorScheme.primary)
@@ -358,6 +357,31 @@ fun HomeScreen(
                         LibrarySongRow(song, playlists, { onSongClick(songs, index) }, { onEditSongTags(song) }, { track, id -> viewModel.addSongToPlaylist(track, id) }, { songForNewPlaylist = song; createOpen = true }, currentSongId = currentSong?.id, isPlaying = isPlaying)
                     }
                 } else if (selectedBottomTab == HomeNavigationTab.PLAYLISTS) {
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { createOpen = true },
+                            shape = RoundedCornerShape(24.dp),
+                            color = Color.Transparent,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Row(
+                                Modifier.background(Brush.linearGradient(listOf(Color(0xFF3A2B20), Color(0xFF221914)))).padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Surface(Modifier.size(52.dp), shape = RoundedCornerShape(16.dp), color = Color(0xFF5A4122)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("Create a playlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text("Start a new mood", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Icon(Icons.Default.Add, contentDescription = "Create playlist", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
                     item { SectionHeading("Favorites", "${favoriteSongs.size} saved tracks") }
                     if (favoriteSongs.isEmpty()) {
                         item { EmptyHint("Tap the heart on the player widget to save the current song here.") }
@@ -595,7 +619,12 @@ private fun PlaylistSection(playlists: List<Playlist>, onPlay: (Long) -> Unit, o
 
 @Composable
 private fun PlaylistCard(playlist: Playlist, onPlay: (Long) -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier.clickable { onPlay(playlist.id) }, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+    Surface(
+        modifier.clickable { onPlay(playlist.id) },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.MusicNote, null, tint = MaterialTheme.colorScheme.primary)
